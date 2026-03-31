@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { generateFeed } from '../utils/feedGenerator'
+import { usePlexLibrary } from '../hooks/usePlexLibrary'
 import AnniversaryCard from '../components/cards/AnniversaryCard'
 import TILCard from '../components/cards/TILCard'
 import ChartTopperCard from '../components/cards/ChartTopperCard'
 import MoodCard from '../components/cards/MoodCard'
 import MoodPlaylist from '../components/MoodPlaylist'
-import songs from '../data/songs.json'
 
 const SNAP_THRESHOLD = 60
 const NAV_HEIGHT = 64
@@ -26,7 +26,8 @@ function renderCard(card, onSongSelect, onMoodSelect, compact = false) {
 }
 
 export default function DiscoveryFeed({ onSongSelect }) {
-  const [pages, setPages] = useState(() => generateFeed())
+  const { tracks, loading, progress } = usePlexLibrary()
+  const [pages, setPages] = useState([])
   const [pageIndex, setPageIndex] = useState(0)
   const [dragOffset, setDragOffset] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
@@ -35,12 +36,19 @@ export default function DiscoveryFeed({ onSongSelect }) {
   const isDragging = useRef(false)
   const containerRef = useRef(null)
 
+  // Generate feed once tracks are loaded
+  useEffect(() => {
+    if (tracks.length > 0 && pages.length === 0) {
+      setPages(generateFeed(tracks))
+    }
+  }, [tracks, pages.length])
+
   // Generate more pages when nearing the end
   useEffect(() => {
-    if (pageIndex >= pages.length - 4) {
-      setPages(prev => [...prev, ...generateFeed()])
+    if (tracks.length > 0 && pages.length > 0 && pageIndex >= pages.length - 4) {
+      setPages(prev => [...prev, ...generateFeed(tracks)])
     }
-  }, [pageIndex, pages.length])
+  }, [pageIndex, pages.length, tracks])
 
   const goToPage = useCallback((newIndex) => {
     if (newIndex < 0 || isAnimating) return
@@ -58,7 +66,6 @@ export default function DiscoveryFeed({ onSongSelect }) {
   const handleTouchMove = (e) => {
     if (!isDragging.current || touchStartY.current === null) return
     const delta = e.touches[0].clientY - touchStartY.current
-    // Resist pulling back past the first card
     if (pageIndex === 0 && delta > 0) {
       setDragOffset(delta * 0.15)
     } else {
@@ -71,18 +78,11 @@ export default function DiscoveryFeed({ onSongSelect }) {
     isDragging.current = false
     const delta = e.changedTouches[0].clientY - (touchStartY.current ?? 0)
     touchStartY.current = null
-
-    if (delta < -SNAP_THRESHOLD) {
-      goToPage(pageIndex + 1)
-    } else if (delta > SNAP_THRESHOLD && pageIndex > 0) {
-      goToPage(pageIndex - 1)
-    } else {
-      // Snap back
-      setDragOffset(0)
-    }
+    if (delta < -SNAP_THRESHOLD) goToPage(pageIndex + 1)
+    else if (delta > SNAP_THRESHOLD && pageIndex > 0) goToPage(pageIndex - 1)
+    else setDragOffset(0)
   }
 
-  // Keyboard support for desktop testing
   useEffect(() => {
     const handler = (e) => {
       if (e.key === 'ArrowUp') goToPage(pageIndex + 1)
@@ -93,10 +93,48 @@ export default function DiscoveryFeed({ onSongSelect }) {
   }, [pageIndex, goToPage])
 
   const contentHeight = `calc(100vh - ${NAV_HEIGHT}px)`
-  const currentPage = pages[pageIndex]
+
+  // Mood songs come from the live tracks array
   const moodSongs = selectedMood
-    ? selectedMood.songIds.map(id => songs.find(s => s.id === id)).filter(Boolean)
+    ? (selectedMood.songIds || []).map(id => tracks.find(t => t.id === id)).filter(Boolean)
     : []
+
+  // Loading state
+  if (loading || pages.length === 0) {
+    const pct = progress.total > 0 ? Math.round((progress.loaded / progress.total) * 100) : 0
+    return (
+      <div style={{
+        height: contentHeight, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: '20px',
+      }}>
+        <div style={{ fontSize: '32px' }}>🎵</div>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ margin: 0, fontSize: '14px', color: '#a1a1aa', marginBottom: '8px' }}>
+            Building your discovery feed...
+          </p>
+          {progress.total > 0 && (
+            <>
+              <div style={{
+                width: '200px', height: '4px', background: '#27272a',
+                borderRadius: '9999px', overflow: 'hidden',
+              }}>
+                <div style={{
+                  width: `${pct}%`, height: '100%',
+                  background: '#a78bfa', borderRadius: '9999px',
+                  transition: 'width 0.3s',
+                }} />
+              </div>
+              <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#52525b' }}>
+                {progress.loaded.toLocaleString()} / {progress.total.toLocaleString()} tracks
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  const currentPage = pages[pageIndex]
 
   return (
     <div
@@ -105,28 +143,21 @@ export default function DiscoveryFeed({ onSongSelect }) {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{
-        height: contentHeight,
-        overflow: 'hidden',
-        position: 'relative',
-        touchAction: 'none',
-        userSelect: 'none',
+        height: contentHeight, overflow: 'hidden', position: 'relative',
+        touchAction: 'none', userSelect: 'none',
       }}
     >
-      {/* Cards container — follows drag offset */}
       <div style={{
         height: '100%',
         transform: `translateY(${dragOffset}px)`,
         transition: isDragging.current ? 'none' : 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
-        padding: '12px 16px',
-        boxSizing: 'border-box',
+        padding: '12px 16px', boxSizing: 'border-box',
       }}>
         {currentPage?.layout === 'single' ? (
-          // Single card — full width, full height
           <div style={{ height: '100%' }}>
             {renderCard(currentPage.cards[0], onSongSelect, setSelectedMood)}
           </div>
         ) : (
-          // Double card — two cards side by side
           <div style={{ height: '100%', display: 'flex', gap: '10px' }}>
             {currentPage?.cards.map(card => (
               <div key={card.id} style={{ flex: 1, height: '100%' }}>
@@ -137,7 +168,7 @@ export default function DiscoveryFeed({ onSongSelect }) {
         )}
       </div>
 
-      {/* Page indicator dots */}
+      {/* Page dots */}
       <div style={{
         position: 'absolute', right: '12px', top: '50%',
         transform: 'translateY(-50%)',
@@ -159,7 +190,6 @@ export default function DiscoveryFeed({ onSongSelect }) {
         })}
       </div>
 
-      {/* Swipe hint on first visit */}
       {pageIndex === 0 && (
         <div style={{
           position: 'absolute', bottom: '20px', left: '50%',
@@ -169,19 +199,11 @@ export default function DiscoveryFeed({ onSongSelect }) {
           pointerEvents: 'none', animation: 'fadeInOut 3s ease 1.5s forwards',
           opacity: 0,
         }}>
-          <style>{`
-            @keyframes fadeInOut {
-              0% { opacity: 0; }
-              20% { opacity: 1; }
-              80% { opacity: 1; }
-              100% { opacity: 0; }
-            }
-          `}</style>
+          <style>{`@keyframes fadeInOut { 0%{opacity:0} 20%{opacity:1} 80%{opacity:1} 100%{opacity:0} }`}</style>
           swipe up to explore
         </div>
       )}
 
-      {/* Mood playlist overlay */}
       {selectedMood && (
         <MoodPlaylist
           mood={selectedMood}

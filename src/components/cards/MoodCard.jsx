@@ -54,7 +54,7 @@ export default function MoodCard({ card, onMoodSelect, compact }) {
         <span style={{
           color: 'rgba(255,255,255,0.6)', fontSize: '13px',
         }}>
-          {mood.songIds.length} songs
+          {mood.trackCount || mood.songIds?.length || 0} songs
         </span>
         <div style={{
           background: 'rgba(255,255,255,0.2)', borderRadius: '9999px',

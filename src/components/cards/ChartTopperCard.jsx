@@ -39,7 +39,7 @@ export default function ChartTopperCard({ card, onSelect, compact }) {
           padding: '4px 12px', marginBottom: compact ? '12px' : '20px',
         }}>
           <span style={{ fontSize: '10px', color: '#fbbf24', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            🏆 Billboard #1
+            {card.isFeatured ? '⭐ Featured Artist' : '🏆 Billboard #1'}
           </span>
         </div>
 

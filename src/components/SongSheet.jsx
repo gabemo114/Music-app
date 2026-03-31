@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { db } from '../lib/firebase'
+import { albumArtUrl, streamUrl } from '../lib/plex'
 import {
   collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc
 } from 'firebase/firestore'
@@ -27,12 +28,100 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 }
 
+function AudioPlayer({ song }) {
+  const audioRef = useRef(null)
+  const [playing, setPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(song.duration || 0)
+
+  const src = song.streamKey ? streamUrl(song.streamKey) : null
+
+  useEffect(() => {
+    setPlaying(false)
+    setCurrentTime(0)
+  }, [song.id])
+
+  function togglePlay() {
+    const audio = audioRef.current
+    if (!audio) return
+    if (playing) { audio.pause(); setPlaying(false) }
+    else { audio.play(); setPlaying(true) }
+  }
+
+  function onTimeUpdate() {
+    setCurrentTime(audioRef.current?.currentTime || 0)
+  }
+
+  function onLoadedMetadata() {
+    setDuration(audioRef.current?.duration || song.duration || 0)
+  }
+
+  function seek(e) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const pct = (e.clientX - rect.left) / rect.width
+    const newTime = pct * duration
+    if (audioRef.current) audioRef.current.currentTime = newTime
+    setCurrentTime(newTime)
+  }
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+
+  if (!src) return null
+
+  return (
+    <div style={{ marginBottom: '28px' }}>
+      <audio
+        ref={audioRef}
+        src={src}
+        onTimeUpdate={onTimeUpdate}
+        onLoadedMetadata={onLoadedMetadata}
+        onEnded={() => setPlaying(false)}
+      />
+
+      {/* Progress bar */}
+      <div
+        onClick={seek}
+        style={{
+          height: '4px', background: '#27272a', borderRadius: '9999px',
+          cursor: 'pointer', marginBottom: '8px', position: 'relative',
+        }}
+      >
+        <div style={{
+          width: `${progress}%`, height: '100%',
+          background: '#a78bfa', borderRadius: '9999px',
+          transition: 'width 0.1s linear',
+        }} />
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: '11px', color: '#52525b' }}>{formatDuration(Math.floor(currentTime))}</span>
+
+        <button
+          onClick={togglePlay}
+          style={{
+            width: '48px', height: '48px', borderRadius: '50%',
+            background: '#fafafa', border: 'none', cursor: 'pointer',
+            fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#09090b',
+          }}
+        >
+          {playing ? '⏸' : '▶'}
+        </button>
+
+        <span style={{ fontSize: '11px', color: '#52525b' }}>{formatDuration(duration)}</span>
+      </div>
+    </div>
+  )
+}
+
 export default function SongSheet({ song, onClose }) {
   const [memories, setMemories] = useState([])
   const [newMemory, setNewMemory] = useState('')
   const [saving, setSaving] = useState(false)
+  const [artErrored, setArtErrored] = useState(false)
 
   useEffect(() => {
+    setArtErrored(false)
     if (!song) return
     const q = query(
       collection(db, 'memories', song.id, 'entries'),
@@ -62,6 +151,7 @@ export default function SongSheet({ song, onClose }) {
   if (!song) return null
 
   const gradient = DECADE_GRADIENTS[song.decade] || DECADE_GRADIENTS['1960s']
+  const artSrc = song.thumb && !artErrored ? albumArtUrl(song.thumb) : null
 
   return (
     <>
@@ -79,22 +169,17 @@ export default function SongSheet({ song, onClose }) {
         position: 'fixed', bottom: 0, left: 0, right: 0,
         background: '#09090b', borderTop: '1px solid #27272a',
         borderRadius: '16px 16px 0 0',
-        zIndex: 50, maxHeight: '90vh', overflowY: 'auto',
+        zIndex: 50, maxHeight: '92vh', overflowY: 'auto',
         animation: 'slideUp 0.25s ease-out',
       }}>
-        <style>{`
-          @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-          }
-        `}</style>
+        <style>{`@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }`}</style>
 
         {/* Handle */}
         <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '8px' }}>
           <div style={{ width: '40px', height: '4px', borderRadius: '9999px', background: '#3f3f46' }} />
         </div>
 
-        {/* Close button */}
+        {/* Close */}
         <button
           onClick={onClose}
           style={{
@@ -110,45 +195,63 @@ export default function SongSheet({ song, onClose }) {
 
         <div style={{ padding: '8px 24px 40px' }}>
           {/* Cover art + title */}
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', marginBottom: '28px' }}>
-            <div style={{
-              width: '120px', height: '120px', borderRadius: '10px',
-              background: gradient, flexShrink: 0,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '36px',
-            }}>
-              🎵
-            </div>
-            <div style={{ paddingTop: '8px' }}>
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', marginBottom: '24px' }}>
+            {artSrc ? (
+              <img
+                src={artSrc}
+                alt={song.title}
+                onError={() => setArtErrored(true)}
+                style={{
+                  width: '120px', height: '120px', borderRadius: '10px',
+                  objectFit: 'cover', flexShrink: 0,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                }}
+              />
+            ) : (
+              <div style={{
+                width: '120px', height: '120px', borderRadius: '10px',
+                background: gradient, flexShrink: 0,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '36px',
+              }}>
+                🎵
+              </div>
+            )}
+            <div style={{ paddingTop: '8px', overflow: 'hidden' }}>
               <p style={{ margin: 0, fontSize: '11px', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
-                {song.genre} · {song.decade}
+                {song.genre} {song.decade ? `· ${song.decade}` : ''}
               </p>
               <h2 style={{ margin: '0 0 6px', fontSize: '20px', fontWeight: 700, lineHeight: 1.2 }}>
                 {song.title}
               </h2>
-              <p style={{ margin: 0, fontSize: '15px', color: '#a1a1aa' }}>{song.artist}</p>
+              <p style={{ margin: 0, fontSize: '15px', color: '#a1a1aa' }}>
+                {song.artist || 'Unknown Artist'}
+              </p>
               {song.album && (
                 <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#52525b' }}>{song.album}</p>
               )}
             </div>
           </div>
 
+          {/* Audio player */}
+          <AudioPlayer song={song} />
+
           {/* Metadata grid */}
           <div style={{
             display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '12px', marginBottom: '28px',
+            gap: '10px', marginBottom: '28px',
           }}>
             {[
-              { label: 'Year', value: song.year },
-              {
-                label: 'Billboard Peak',
-                value: `#${song.billboard_peak}`,
-                highlight: song.billboard_peak === 1 ? '#facc15' : song.billboard_peak <= 10 ? '#a78bfa' : null,
-              },
-              { label: 'Duration', value: formatDuration(song.duration) },
-              { label: 'Charted Week', value: formatDate(song.billboard_peak_date), span: 2 },
-              { label: 'Decade', value: song.decade },
+              { label: 'Year', value: song.year || '—' },
+              song.billboard_peak
+                ? { label: 'Billboard', value: `#${song.billboard_peak}`, highlight: song.billboard_peak === 1 ? '#facc15' : song.billboard_peak <= 10 ? '#a78bfa' : null }
+                : { label: 'Genre', value: song.genre || '—' },
+              { label: 'Duration', value: formatDuration(song.duration) || '—' },
+              song.billboard_peak_date
+                ? { label: 'Charted', value: formatDate(song.billboard_peak_date), span: 2 }
+                : { label: 'Album', value: song.album || '—', span: 2 },
+              { label: 'Decade', value: song.decade || '—' },
             ].map(({ label, value, highlight, span }) => (
               <div
                 key={label}
@@ -160,7 +263,11 @@ export default function SongSheet({ song, onClose }) {
                 <p style={{ margin: 0, fontSize: '11px', color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
                   {label}
                 </p>
-                <p style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: highlight || '#fafafa' }}>
+                <p style={{
+                  margin: 0, fontSize: '14px', fontWeight: 600,
+                  color: highlight || '#fafafa',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
                   {value}
                 </p>
               </div>
@@ -170,8 +277,6 @@ export default function SongSheet({ song, onClose }) {
           {/* Memories */}
           <div>
             <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 600 }}>Memories</h3>
-
-            {/* Add memory */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
               <textarea
                 placeholder="What does this song remind you of?"
@@ -182,8 +287,7 @@ export default function SongSheet({ song, onClose }) {
                 style={{
                   flex: 1, background: '#18181b', border: '1px solid #3f3f46',
                   borderRadius: '8px', padding: '10px 12px', fontSize: '14px',
-                  color: '#fafafa', outline: 'none', resize: 'none',
-                  fontFamily: 'inherit',
+                  color: '#fafafa', outline: 'none', resize: 'none', fontFamily: 'inherit',
                 }}
               />
               <button
@@ -192,15 +296,14 @@ export default function SongSheet({ song, onClose }) {
                 style={{
                   background: '#fafafa', color: '#09090b', border: 'none',
                   borderRadius: '8px', padding: '0 16px', fontSize: '13px',
-                  fontWeight: 600, cursor: 'pointer', opacity: saving || !newMemory.trim() ? 0.4 : 1,
-                  alignSelf: 'stretch',
+                  fontWeight: 600, cursor: 'pointer',
+                  opacity: saving || !newMemory.trim() ? 0.4 : 1, alignSelf: 'stretch',
                 }}
               >
                 Save
               </button>
             </div>
 
-            {/* Memory list */}
             {memories.length === 0 ? (
               <p style={{ color: '#52525b', fontSize: '14px', textAlign: 'center', padding: '20px 0' }}>
                 No memories yet. Add your first one above.
@@ -208,13 +311,10 @@ export default function SongSheet({ song, onClose }) {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {memories.map(m => (
-                  <div
-                    key={m.id}
-                    style={{
-                      background: '#18181b', borderRadius: '10px', padding: '14px',
-                      display: 'flex', justifyContent: 'space-between', gap: '12px',
-                    }}
-                  >
+                  <div key={m.id} style={{
+                    background: '#18181b', borderRadius: '10px', padding: '14px',
+                    display: 'flex', justifyContent: 'space-between', gap: '12px',
+                  }}>
                     <div style={{ flex: 1 }}>
                       <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.5, color: '#e4e4e7' }}>{m.text}</p>
                       {m.createdAt && (
