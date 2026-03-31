@@ -150,8 +150,17 @@ export default function App() {
                     {song.artist}
                   </p>
                 </div>
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                  <span style={{ color: '#52525b', fontSize: '13px' }}>{song.year}</span>
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'center', textAlign: 'right' }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: '11px', color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Billboard</p>
+                    <p style={{ margin: 0, fontSize: '13px', color: song.billboard_peak === 1 ? '#facc15' : '#a1a1aa', fontWeight: song.billboard_peak <= 10 ? 600 : 400 }}>
+                      #{song.billboard_peak}
+                    </p>
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontSize: '11px', color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Year</p>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#a1a1aa' }}>{song.year}</p>
+                  </div>
                   <span style={{ color: '#52525b', fontSize: '13px' }}>{formatDuration(song.duration)}</span>
                 </div>
               </div>

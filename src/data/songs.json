@@ -9,7 +9,9 @@
     "album": "Classic Soul Music",
     "year": 1964,
     "decade": "1960s",
-    "duration": 165
+    "duration": 165,
+    "billboard_peak": 22,
+    "billboard_peak_date": "1964-03-14"
   },
   {
     "id": "soul-2",
@@ -21,7 +23,9 @@
     "album": "Classic Soul Music",
     "year": 1978,
     "decade": "1970s",
-    "duration": 247
+    "duration": 247,
+    "billboard_peak": 21,
+    "billboard_peak_date": "1978-11-04"
   },
   {
     "id": "soul-3",
@@ -33,7 +37,9 @@
     "album": "Classic Soul Music",
     "year": 1967,
     "decade": "1960s",
-    "duration": 157
+    "duration": 157,
+    "billboard_peak": 2,
+    "billboard_peak_date": "1967-10-14"
   },
   {
     "id": "soul-4",
@@ -45,7 +51,9 @@
     "album": "Classic Soul Music",
     "year": 1960,
     "decade": "1960s",
-    "duration": 146
+    "duration": 146,
+    "billboard_peak": 16,
+    "billboard_peak_date": "1960-03-19"
   },
   {
     "id": "soul-5",
@@ -57,7 +65,9 @@
     "album": "Classic Soul Music",
     "year": 1968,
     "decade": "1960s",
-    "duration": 164
+    "duration": 164,
+    "billboard_peak": 1,
+    "billboard_peak_date": "1968-03-16"
   },
   {
     "id": "soul-6",
@@ -69,7 +79,9 @@
     "album": "Classic Soul Music",
     "year": 1970,
     "decade": "1970s",
-    "duration": 234
+    "duration": 234,
+    "billboard_peak": 4,
+    "billboard_peak_date": "1970-03-07"
   },
   {
     "id": "soul-7",
@@ -81,7 +93,9 @@
     "album": "Classic Soul Music",
     "year": 1965,
     "decade": "1960s",
-    "duration": 190
+    "duration": 190,
+    "billboard_peak": 1,
+    "billboard_peak_date": "1965-08-14"
   },
   {
     "id": "soul-8",
@@ -93,7 +107,9 @@
     "album": "Classic Soul Music",
     "year": 1966,
     "decade": "1960s",
-    "duration": 213
+    "duration": 213,
+    "billboard_peak": 50,
+    "billboard_peak_date": "1966-09-10"
   },
   {
     "id": "soul-9",
@@ -105,7 +121,9 @@
     "album": "Classic Soul Music",
     "year": 1974,
     "decade": "1970s",
-    "duration": 200
+    "duration": 200,
+    "billboard_peak": 1,
+    "billboard_peak_date": "1974-07-13"
   },
   {
     "id": "soul-10",
@@ -117,7 +135,9 @@
     "album": "Classic Soul Music",
     "year": 1980,
     "decade": "1980s",
-    "duration": 298
+    "duration": 298,
+    "billboard_peak": 4,
+    "billboard_peak_date": "1980-08-30"
   },
   {
     "id": "soul-11",
@@ -129,7 +149,9 @@
     "album": "Classic Soul Music",
     "year": 1964,
     "decade": "1960s",
-    "duration": 178
+    "duration": 178,
+    "billboard_peak": 6,
+    "billboard_peak_date": "1964-05-16"
   },
   {
     "id": "soul-12",
@@ -141,7 +163,9 @@
     "album": "Classic Soul Music",
     "year": 1967,
     "decade": "1960s",
-    "duration": 169
+    "duration": 169,
+    "billboard_peak": 16,
+    "billboard_peak_date": "1967-08-19"
   },
   {
     "id": "soul-13",
@@ -153,7 +177,9 @@
     "album": "Classic Soul Music",
     "year": 1962,
     "decade": "1960s",
-    "duration": 174
+    "duration": 174,
+    "billboard_peak": 3,
+    "billboard_peak_date": "1962-10-06"
   },
   {
     "id": "soul-14",
@@ -165,7 +191,9 @@
     "album": "Classic Soul Music",
     "year": 1973,
     "decade": "1970s",
-    "duration": 287
+    "duration": 287,
+    "billboard_peak": 1,
+    "billboard_peak_date": "1973-02-24"
   },
   {
     "id": "soul-15",
@@ -177,7 +205,9 @@
     "album": "Classic Soul Music",
     "year": 1970,
     "decade": "1970s",
-    "duration": 166
+    "duration": 166,
+    "billboard_peak": 45,
+    "billboard_peak_date": "1970-10-17"
   },
   {
     "id": "soul-16",
@@ -189,7 +219,9 @@
     "album": "Classic Soul Music",
     "year": 1971,
     "decade": "1970s",
-    "duration": 202
+    "duration": 202,
+    "billboard_peak": 15,
+    "billboard_peak_date": "1971-11-06"
   },
   {
     "id": "soul-17",
@@ -201,7 +233,9 @@
     "album": "Classic Soul Music",
     "year": 1959,
     "decade": "1960s",
-    "duration": 307
+    "duration": 307,
+    "billboard_peak": 6,
+    "billboard_peak_date": "1959-08-03"
   },
   {
     "id": "soul-18",
@@ -213,7 +247,9 @@
     "album": "Classic Soul Music",
     "year": 1967,
     "decade": "1960s",
-    "duration": 167
+    "duration": 167,
+    "billboard_peak": 21,
+    "billboard_peak_date": "1967-02-11"
   },
   {
     "id": "soul-19",
@@ -225,7 +261,9 @@
     "album": "Classic Soul Music",
     "year": 1964,
     "decade": "1960s",
-    "duration": 162
+    "duration": 162,
+    "billboard_peak": 4,
+    "billboard_peak_date": "1964-08-01"
   },
   {
     "id": "soul-20",
@@ -237,7 +275,9 @@
     "album": "Classic Soul Music",
     "year": 1968,
     "decade": "1960s",
-    "duration": 217
+    "duration": 217,
+    "billboard_peak": 10,
+    "billboard_peak_date": "1968-08-31"
   },
   {
     "id": "soul-21",
@@ -249,7 +289,9 @@
     "album": "Classic Soul Music",
     "year": 1966,
     "decade": "1960s",
-    "duration": 184
+    "duration": 184,
+    "billboard_peak": 28,
+    "billboard_peak_date": "1966-11-05"
   },
   {
     "id": "soul-22",
@@ -261,7 +303,9 @@
     "album": "Classic Soul Music",
     "year": 1976,
     "decade": "1970s",
-    "duration": 192
+    "duration": 192,
+    "billboard_peak": 8,
+    "billboard_peak_date": "1976-04-03"
   },
   {
     "id": "soul-23",
@@ -273,7 +317,9 @@
     "album": "Classic Soul Music",
     "year": 1962,
     "decade": "1960s",
-    "duration": 185
+    "duration": 185,
+    "billboard_peak": 8,
+    "billboard_peak_date": "1962-08-11"
   },
   {
     "id": "soul-24",
@@ -285,7 +331,9 @@
     "album": "Classic Soul Music",
     "year": 2005,
     "decade": "2000s",
-    "duration": 237
+    "duration": 237,
+    "billboard_peak": 89,
+    "billboard_peak_date": "2005-03-19"
   },
   {
     "id": "soul-25",
@@ -297,7 +345,9 @@
     "album": "Classic Soul Music",
     "year": 1975,
     "decade": "1970s",
-    "duration": 254
+    "duration": 254,
+    "billboard_peak": 97,
+    "billboard_peak_date": "1975-06-14"
   },
   {
     "id": "soul-26",
@@ -309,7 +359,9 @@
     "album": "Classic Soul Music",
     "year": 1966,
     "decade": "1960s",
-    "duration": 174
+    "duration": 174,
+    "billboard_peak": 14,
+    "billboard_peak_date": "1966-04-09"
   },
   {
     "id": "soul-27",
@@ -321,7 +373,9 @@
     "album": "Classic Soul Music",
     "year": 1965,
     "decade": "1960s",
-    "duration": 157
+    "duration": 157,
+    "billboard_peak": 21,
+    "billboard_peak_date": "1965-08-28"
   },
   {
     "id": "soul-28",
@@ -333,7 +387,9 @@
     "album": "Classic Soul Music",
     "year": 1976,
     "decade": "1970s",
-    "duration": 213
+    "duration": 213,
+    "billboard_peak": 2,
+    "billboard_peak_date": "1976-11-13"
   },
   {
     "id": "soul-29",
@@ -345,7 +401,9 @@
     "album": "Classic Soul Music",
     "year": 1971,
     "decade": "1970s",
-    "duration": 170
+    "duration": 170,
+    "billboard_peak": 6,
+    "billboard_peak_date": "1972-01-08"
   },
   {
     "id": "soul-30",
@@ -357,7 +415,9 @@
     "album": "Classic Soul Music",
     "year": 1979,
     "decade": "1970s",
-    "duration": 254
+    "duration": 254,
+    "billboard_peak": 36,
+    "billboard_peak_date": "1979-09-22"
   },
   {
     "id": "soul-31",
@@ -369,7 +429,9 @@
     "album": "Classic Soul Music",
     "year": 1989,
     "decade": "1980s",
-    "duration": 206
+    "duration": 206,
+    "billboard_peak": 1,
+    "billboard_peak_date": "1989-05-20"
   },
   {
     "id": "soul-32",
@@ -381,7 +443,9 @@
     "album": "Classic Soul Music",
     "year": 1966,
     "decade": "1960s",
-    "duration": 167
+    "duration": 167,
+    "billboard_peak": 7,
+    "billboard_peak_date": "1966-08-06"
   },
   {
     "id": "soul-33",
@@ -393,7 +457,9 @@
     "album": "Classic Soul Music",
     "year": 1994,
     "decade": "1990s",
-    "duration": 207
+    "duration": 207,
+    "billboard_peak": 70,
+    "billboard_peak_date": "1994-11-05"
   },
   {
     "id": "soul-34",
@@ -405,7 +471,9 @@
     "album": "Classic Soul Music",
     "year": 1967,
     "decade": "1960s",
-    "duration": 141
+    "duration": 141,
+    "billboard_peak": 2,
+    "billboard_peak_date": "1967-04-29"
   },
   {
     "id": "soul-35",
@@ -417,7 +485,9 @@
     "album": "Classic Soul Music",
     "year": 1972,
     "decade": "1970s",
-    "duration": 164
+    "duration": 164,
+    "billboard_peak": 5,
+    "billboard_peak_date": "1972-07-08"
   },
   {
     "id": "soul-36",
@@ -429,7 +499,9 @@
     "album": "Classic Soul Music",
     "year": 1979,
     "decade": "1970s",
-    "duration": 495
+    "duration": 495,
+    "billboard_peak": 1,
+    "billboard_peak_date": "1979-08-18"
   },
   {
     "id": "soul-37",
@@ -441,7 +513,9 @@
     "album": "Classic Soul Music",
     "year": 1993,
     "decade": "1990s",
-    "duration": 242
+    "duration": 242,
+    "billboard_peak": 5,
+    "billboard_peak_date": "1993-08-07"
   },
   {
     "id": "soul-38",
@@ -453,6 +527,8 @@
     "album": "Classic Soul Music",
     "year": 1969,
     "decade": "1960s",
-    "duration": 147
+    "duration": 147,
+    "billboard_peak": 88,
+    "billboard_peak_date": "1969-04-05"
   }
 ]
