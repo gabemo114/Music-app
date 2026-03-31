@@ -131,13 +131,17 @@ function buildMoodCards(tracks, rng) {
     })
 
     if (matched.length >= 3) {
+      const shuffled = shuffle(matched, rng)
+      const coverTrack = shuffled.find(t => t.thumb) || shuffled[0]
       cards.push({
         type: 'mood',
         id: `mood-${mood.id}`,
         mood: {
           ...mood,
-          songIds: shuffle(matched, rng).slice(0, 20).map(t => t.id),
+          songIds: shuffled.slice(0, 20).map(t => t.id),
           trackCount: matched.length,
+          coverThumb: coverTrack?.thumb || null,
+          blurColors: coverTrack?.blurColors || null,
         },
       })
     }

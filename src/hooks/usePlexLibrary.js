@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { fetchAllTracks } from '../lib/plex'
 
-const CACHE_KEY = 'plex_library_v1'
+const CACHE_KEY = 'plex_library_v2'
 const CACHE_TTL = 1000 * 60 * 30 // 30 minutes
 
 function loadCache() {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { db } from '../lib/firebase'
-import { albumArtUrl, streamUrl } from '../lib/plex'
+import { albumArtUrl, artistArtUrl, streamUrl } from '../lib/plex'
 import {
   collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc
 } from 'firebase/firestore'
@@ -150,8 +150,12 @@ export default function SongSheet({ song, onClose }) {
 
   if (!song) return null
 
-  const gradient = DECADE_GRADIENTS[song.decade] || DECADE_GRADIENTS['1960s']
-  const artSrc = song.thumb && !artErrored ? albumArtUrl(song.thumb) : null
+  const blurGradient = song.blurColors
+    ? `linear-gradient(160deg, ${song.blurColors.topLeft} 0%, ${song.blurColors.topRight} 50%, ${song.blurColors.bottomRight} 100%)`
+    : null
+  const gradient = blurGradient || DECADE_GRADIENTS[song.decade] || DECADE_GRADIENTS['1960s']
+  const artSrc = song.thumb && !artErrored ? albumArtUrl(song.thumb, 400) : null
+  const bgArtSrc = song.artistArt ? artistArtUrl(song.artistArt) : null
 
   return (
     <>
@@ -174,28 +178,85 @@ export default function SongSheet({ song, onClose }) {
       }}>
         <style>{`@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }`}</style>
 
-        {/* Handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '8px' }}>
-          <div style={{ width: '40px', height: '4px', borderRadius: '9999px', background: '#3f3f46' }} />
+        {/* Hero header with artist background art */}
+        <div style={{
+          position: 'relative', borderRadius: '16px 16px 0 0',
+          overflow: 'hidden', background: gradient, minHeight: '160px',
+        }}>
+          {bgArtSrc && (
+            <div style={{
+              position: 'absolute', inset: 0,
+              backgroundImage: `url(${bgArtSrc})`,
+              backgroundSize: 'cover', backgroundPosition: 'center top',
+              opacity: 0.35,
+            }} />
+          )}
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0, height: '70%',
+            background: 'linear-gradient(to top, #09090b 0%, transparent 100%)',
+          }} />
+
+          {/* Handle */}
+          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', position: 'relative', zIndex: 1 }}>
+            <div style={{ width: '40px', height: '4px', borderRadius: '9999px', background: 'rgba(255,255,255,0.3)' }} />
+          </div>
+
+          {/* Close */}
+          <button
+            onClick={onClose}
+            style={{
+              position: 'absolute', top: '16px', right: '20px', zIndex: 1,
+              background: 'rgba(0,0,0,0.4)', border: 'none', color: '#fff',
+              borderRadius: '9999px', width: '28px', height: '28px',
+              cursor: 'pointer', fontSize: '14px', display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            ✕
+          </button>
+
+          {/* Cover art + title inside hero */}
+          <div style={{ position: 'relative', zIndex: 1, padding: '16px 24px 24px', display: 'flex', gap: '16px', alignItems: 'flex-end' }}>
+            {artSrc ? (
+              <img
+                src={artSrc}
+                alt={song.title}
+                onError={() => setArtErrored(true)}
+                style={{
+                  width: '90px', height: '90px', borderRadius: '10px',
+                  objectFit: 'cover', flexShrink: 0,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+                }}
+              />
+            ) : (
+              <div style={{
+                width: '90px', height: '90px', borderRadius: '10px',
+                background: gradient, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px',
+              }}>
+                🎵
+              </div>
+            )}
+            <div style={{ overflow: 'hidden', paddingBottom: '4px' }}>
+              <p style={{ margin: 0, fontSize: '10px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '3px' }}>
+                {song.genre} {song.decade ? `· ${song.decade}` : ''}
+              </p>
+              <h2 style={{ margin: '0 0 4px', fontSize: '18px', fontWeight: 700, lineHeight: 1.2, color: '#fff' }}>
+                {song.title}
+              </h2>
+              <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.7)' }}>
+                {song.artist || 'Unknown Artist'}
+              </p>
+              {song.album && (
+                <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>{song.album}</p>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Close */}
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute', top: '16px', right: '20px',
-            background: '#27272a', border: 'none', color: '#a1a1aa',
-            borderRadius: '9999px', width: '28px', height: '28px',
-            cursor: 'pointer', fontSize: '14px', display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          ✕
-        </button>
-
-        <div style={{ padding: '8px 24px 40px' }}>
-          {/* Cover art + title */}
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', marginBottom: '24px' }}>
+        <div style={{ padding: '16px 24px 40px' }}>
+          {/* Cover art + title — hidden (moved to hero above) */}
+          <div style={{ display: 'none', gap: '20px', alignItems: 'flex-start', marginBottom: '24px' }}>
             {artSrc ? (
               <img
                 src={artSrc}
