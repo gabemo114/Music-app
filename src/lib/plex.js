@@ -71,12 +71,50 @@ function mapTrack(t) {
 }
 
 export async function fetchAllTracks(onProgress) {
+  // Get total count — fall back to `size` if `totalSize` is absent
   const countRes = await fetch(
     plexUrl(`/library/sections/${MUSIC_SECTION}/all`, { type: 10, 'X-Plex-Container-Size': 0 }),
     { headers: plexHeaders() }
   )
   const countData = await countRes.json()
-  const total = countData.MediaContainer.totalSize
+  const mc0 = countData.MediaContainer
+  const total = mc0.totalSize ?? mc0.size ?? 0
+
+  if (!total) {
+    // totalSize not available with Container-Size=0 on some Plex versions — fetch first page to get size
+    const firstRes = await fetch(
+      plexUrl(`/library/sections/${MUSIC_SECTION}/all`, {
+        type: 10,
+        'X-Plex-Container-Start': 0,
+        'X-Plex-Container-Size': PAGE_SIZE,
+      }),
+      { headers: plexHeaders() }
+    )
+    const firstData = await firstRes.json()
+    const firstMc = firstData.MediaContainer
+    const firstTracks = firstMc.Metadata || []
+    const knownTotal = firstMc.totalSize ?? firstMc.size ?? firstTracks.length
+    const allTracks = firstTracks.map(mapTrack)
+    if (onProgress) onProgress(allTracks.length, knownTotal)
+
+    const remainingPages = Math.ceil((knownTotal - PAGE_SIZE) / PAGE_SIZE)
+    for (let i = 1; i <= remainingPages; i++) {
+      const res = await fetch(
+        plexUrl(`/library/sections/${MUSIC_SECTION}/all`, {
+          type: 10,
+          'X-Plex-Container-Start': i * PAGE_SIZE,
+          'X-Plex-Container-Size': PAGE_SIZE,
+        }),
+        { headers: plexHeaders() }
+      )
+      const data = await res.json()
+      const tracks = data.MediaContainer.Metadata || []
+      if (tracks.length === 0) break
+      allTracks.push(...tracks.map(mapTrack))
+      if (onProgress) onProgress(allTracks.length, knownTotal)
+    }
+    return allTracks
+  }
 
   const pages = Math.ceil(total / PAGE_SIZE)
   const allTracks = []
@@ -92,8 +130,9 @@ export async function fetchAllTracks(onProgress) {
     )
     const data = await res.json()
     const tracks = data.MediaContainer.Metadata || []
+    if (tracks.length === 0) break
     allTracks.push(...tracks.map(mapTrack))
-    if (onProgress) onProgress(Math.min(allTracks.length, total), total)
+    if (onProgress) onProgress(allTracks.length, total)
   }
 
   return allTracks

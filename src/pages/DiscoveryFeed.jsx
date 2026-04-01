@@ -26,7 +26,7 @@ function renderCard(card, onSongSelect, onMoodSelect, compact = false) {
 }
 
 export default function DiscoveryFeed({ onSongSelect }) {
-  const { tracks, loading, progress } = usePlexLibrary()
+  const { tracks, loading, progress, error, refresh } = usePlexLibrary()
   const [pages, setPages] = useState([])
   const [pageIndex, setPageIndex] = useState(0)
   const [dragOffset, setDragOffset] = useState(0)
@@ -98,6 +98,27 @@ export default function DiscoveryFeed({ onSongSelect }) {
   const moodSongs = selectedMood
     ? (selectedMood.songIds || []).map(id => tracks.find(t => t.id === id)).filter(Boolean)
     : []
+
+  // Error state
+  if (error) {
+    return (
+      <div style={{
+        height: contentHeight, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: '16px', padding: '24px',
+      }}>
+        <p style={{ color: '#ef4444', fontSize: '14px', textAlign: 'center' }}>
+          Could not connect to Plex: {error}
+        </p>
+        <button onClick={refresh} style={{
+          background: '#fafafa', color: '#09090b', border: 'none',
+          borderRadius: '8px', padding: '10px 20px', fontSize: '14px',
+          fontWeight: 600, cursor: 'pointer',
+        }}>
+          Retry
+        </button>
+      </div>
+    )
+  }
 
   // Loading state
   if (loading || pages.length === 0) {
