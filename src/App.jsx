@@ -30,9 +30,9 @@ export default function App() {
 
   return (
     <div
-      style={{ backgroundColor: '#09090b', color: '#fafafa', fontFamily: 'system-ui, sans-serif' }}
-      onTouchStart={handleTabSwipeStart}
-      onTouchEnd={handleTabSwipeEnd}
+      style={{ backgroundColor: '#09090b', color: '#fafafa', fontFamily: 'system-ui, sans-serif', height: '100vh', overflow: 'hidden' }}
+      onTouchStart={selectedSong ? undefined : handleTabSwipeStart}
+      onTouchEnd={selectedSong ? undefined : handleTabSwipeEnd}
     >
       {activeTab === 'discover' ? (
         <DiscoveryFeed onSongSelect={setSelectedSong} />

@@ -77,6 +77,7 @@ export default function SongSheet({ song, onClose }) {
       {/* Backdrop */}
       <div
         onClick={onClose}
+        onTouchEnd={(e) => { e.stopPropagation(); onClose() }}
         style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
           zIndex: 40, backdropFilter: 'blur(4px)',
