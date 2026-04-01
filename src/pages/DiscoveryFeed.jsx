@@ -179,9 +179,9 @@ export default function DiscoveryFeed({ onSongSelect }) {
             {renderCard(currentPage.cards[0], onSongSelect, setSelectedMood)}
           </div>
         ) : (
-          <div style={{ height: '100%', display: 'flex', gap: '10px' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {currentPage?.cards.map(card => (
-              <div key={card.id} style={{ flex: 1, height: '100%' }}>
+              <div key={card.id} style={{ flex: 1 }}>
                 {renderCard(card, onSongSelect, setSelectedMood, true)}
               </div>
             ))}
