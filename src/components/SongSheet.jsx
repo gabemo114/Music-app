@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { db } from '../lib/firebase'
-import { albumArtUrl, artistArtUrl, streamUrl } from '../lib/plex'
+import { albumArtUrl, artistArtUrl } from '../lib/plex'
 import {
   collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc
 } from 'firebase/firestore'
@@ -28,91 +28,6 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 }
 
-function AudioPlayer({ song }) {
-  const audioRef = useRef(null)
-  const [playing, setPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(song.duration || 0)
-
-  const src = song.streamKey ? streamUrl(song.streamKey) : null
-
-  useEffect(() => {
-    setPlaying(false)
-    setCurrentTime(0)
-  }, [song.id])
-
-  function togglePlay() {
-    const audio = audioRef.current
-    if (!audio) return
-    if (playing) { audio.pause(); setPlaying(false) }
-    else { audio.play(); setPlaying(true) }
-  }
-
-  function onTimeUpdate() {
-    setCurrentTime(audioRef.current?.currentTime || 0)
-  }
-
-  function onLoadedMetadata() {
-    setDuration(audioRef.current?.duration || song.duration || 0)
-  }
-
-  function seek(e) {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const pct = (e.clientX - rect.left) / rect.width
-    const newTime = pct * duration
-    if (audioRef.current) audioRef.current.currentTime = newTime
-    setCurrentTime(newTime)
-  }
-
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
-
-  if (!src) return null
-
-  return (
-    <div style={{ marginBottom: '28px' }}>
-      <audio
-        ref={audioRef}
-        src={src}
-        onTimeUpdate={onTimeUpdate}
-        onLoadedMetadata={onLoadedMetadata}
-        onEnded={() => setPlaying(false)}
-      />
-
-      {/* Progress bar */}
-      <div
-        onClick={seek}
-        style={{
-          height: '4px', background: '#27272a', borderRadius: '9999px',
-          cursor: 'pointer', marginBottom: '8px', position: 'relative',
-        }}
-      >
-        <div style={{
-          width: `${progress}%`, height: '100%',
-          background: '#a78bfa', borderRadius: '9999px',
-          transition: 'width 0.1s linear',
-        }} />
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: '11px', color: '#52525b' }}>{formatDuration(Math.floor(currentTime))}</span>
-
-        <button
-          onClick={togglePlay}
-          style={{
-            width: '48px', height: '48px', borderRadius: '50%',
-            background: '#fafafa', border: 'none', cursor: 'pointer',
-            fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#09090b',
-          }}
-        >
-          {playing ? '⏸' : '▶'}
-        </button>
-
-        <span style={{ fontSize: '11px', color: '#52525b' }}>{formatDuration(duration)}</span>
-      </div>
-    </div>
-  )
-}
 
 export default function SongSheet({ song, onClose }) {
   const [memories, setMemories] = useState([])
@@ -295,8 +210,7 @@ export default function SongSheet({ song, onClose }) {
             </div>
           </div>
 
-          {/* Audio player */}
-          <AudioPlayer song={song} />
+
 
           {/* Metadata grid */}
           <div style={{
