@@ -92,7 +92,7 @@ export default function DiscoveryFeed({ onSongSelect }) {
     return () => window.removeEventListener('keydown', handler)
   }, [pageIndex, goToPage])
 
-  const contentHeight = `calc(100vh - ${NAV_HEIGHT}px)`
+  const contentHeight = `calc(100dvh - ${NAV_HEIGHT}px - env(safe-area-inset-bottom, 0px))`
 
   // Mood songs come from the live tracks array
   const moodSongs = selectedMood

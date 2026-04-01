@@ -7,7 +7,8 @@ export default function BottomNav({ activeTab, onChange }) {
   return (
     <nav style={{
       position: 'fixed', bottom: 0, left: 0, right: 0,
-      height: '64px',
+      height: 'calc(64px + env(safe-area-inset-bottom, 0px))',
+      paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       background: 'rgba(9,9,11,0.95)',
       borderTop: '1px solid #27272a',
       display: 'flex',

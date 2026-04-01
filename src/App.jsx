@@ -30,7 +30,7 @@ export default function App() {
 
   return (
     <div
-      style={{ backgroundColor: '#09090b', color: '#fafafa', fontFamily: 'system-ui, sans-serif', height: '100vh', overflow: 'hidden' }}
+      style={{ backgroundColor: '#09090b', color: '#fafafa', fontFamily: 'system-ui, sans-serif', height: '100dvh', overflow: 'hidden' }}
       onTouchStart={selectedSong ? undefined : handleTabSwipeStart}
       onTouchEnd={selectedSong ? undefined : handleTabSwipeEnd}
     >
