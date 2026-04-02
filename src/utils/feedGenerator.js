@@ -38,14 +38,16 @@ function dateSeed(date, extra = 0) {
   )
 }
 
-function buildTILCards(libraryArtists, rng) {
+function buildTILCards(libraryArtists, rng, tracks = []) {
   const cards = []
   const artistSet = new Set(libraryArtists.map(a => a.toLowerCase()))
 
   for (const [artist, facts] of Object.entries(TIL_FACTS_BY_ARTIST)) {
     if (artistSet.has(artist.toLowerCase())) {
+      // Find a representative track for this artist to help Genius search
+      const repTrack = tracks.find(t => t.artist?.toLowerCase() === artist.toLowerCase())
       for (const fact of facts) {
-        cards.push({ type: 'til', id: fact.id, fact: { ...fact, artist } })
+        cards.push({ type: 'til', id: fact.id, fact: { ...fact, artist, song: repTrack?.title || null } })
       }
     }
   }
@@ -304,7 +306,7 @@ export function generateFeed(tracks, date = new Date()) {
   const anniversaryCards = buildAnniversaryCards(tracks, date, rng)
   const onThisDayCards = anniversaryCards.filter(c => c.isOnThisDay)
   const roundCards = anniversaryCards.filter(c => !c.isOnThisDay).slice(0, CAP)
-  const tilCards = buildTILCards(libraryArtists, rng).slice(0, CAP)
+  const tilCards = buildTILCards(libraryArtists, rng, tracks).slice(0, CAP)
   const chartCards = buildChartTopperCards(tracks, rng).slice(0, CAP)
   const moodCards = buildMoodCards(tracks, rng).slice(0, CAP)
   const artistCards = buildArtistCards(tracks, rng).slice(0, CAP)

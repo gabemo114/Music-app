@@ -1,5 +1,26 @@
+import { useState, useEffect } from 'react'
+import { fetchGeniusFact } from '../../lib/genius'
+
 export default function TILCard({ card, compact }) {
   const { fact } = card
+  const [geniusFact, setGeniusFact] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!fact.artist || !fact.song) {
+      setLoading(false)
+      return
+    }
+    fetchGeniusFact(fact.song, fact.artist)
+      .then(result => {
+        if (result?.fact) setGeniusFact(result)
+      })
+      .finally(() => setLoading(false))
+  }, [fact.artist, fact.song])
+
+  const displayFact = geniusFact?.fact || fact.fact
+  const displayArtist = geniusFact?.artist || fact.artist
+  const isLive = !!geniusFact?.fact
 
   return (
     <div style={{
@@ -30,37 +51,60 @@ export default function TILCard({ card, compact }) {
           padding: '4px 12px', marginBottom: compact ? '14px' : '24px',
         }}>
           <span style={{ fontSize: '10px', color: '#a78bfa', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            💡 Today I Learned
+            💡 Did You Know
           </span>
         </div>
 
-        <p style={{
-          margin: 0, color: '#e4e4e7',
-          fontSize: compact ? '14px' : '18px',
-          lineHeight: compact ? 1.5 : 1.65,
-          fontWeight: 400,
-        }}>
-          "{fact.fact}"
-        </p>
+        {loading ? (
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div style={{ width: '24px', height: '24px', borderRadius: '50%', border: '2px solid #7c3aed', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+            <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+            <p style={{ margin: 0, color: '#52525b', fontSize: '14px' }}>Looking up facts…</p>
+          </div>
+        ) : (
+          <p style={{
+            margin: 0, color: '#e4e4e7',
+            fontSize: compact ? '14px' : '18px',
+            lineHeight: compact ? 1.5 : 1.65,
+            fontWeight: 400,
+          }}>
+            "{displayFact}"
+          </p>
+        )}
       </div>
 
       {/* Bottom attribution */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '16px' }}>
-        <div style={{
-          width: '32px', height: '32px', borderRadius: '50%',
-          background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '14px', flexShrink: 0,
-        }}>
-          🎤
+      {!loading && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {geniusFact?.thumbnailUrl ? (
+              <img
+                src={geniusFact.thumbnailUrl}
+                alt={displayArtist}
+                style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+              />
+            ) : (
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '50%',
+                background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '14px', flexShrink: 0,
+              }}>🎤</div>
+            )}
+            <div>
+              <p style={{ margin: 0, fontSize: compact ? '12px' : '14px', fontWeight: 600, color: '#fafafa' }}>
+                {displayArtist}
+              </p>
+              {fact.song && (
+                <p style={{ margin: 0, fontSize: '11px', color: '#52525b' }}>{fact.song}</p>
+              )}
+            </div>
+          </div>
+          {isLive && (
+            <span style={{ fontSize: '10px', color: '#52525b', letterSpacing: '0.05em' }}>via Genius</span>
+          )}
         </div>
-        <div>
-          <p style={{ margin: 0, fontSize: compact ? '12px' : '14px', fontWeight: 600, color: '#fafafa' }}>
-            {fact.artist}
-          </p>
-          <p style={{ margin: 0, fontSize: '11px', color: '#52525b' }}>{fact.year}</p>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
