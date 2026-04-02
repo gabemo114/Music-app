@@ -29,7 +29,7 @@ function formatDate(dateStr) {
 }
 
 
-export default function SongSheet({ song, onClose }) {
+export default function SongSheet({ song, onClose, currentSong, isPlaying, onPlayPause, onSongSelect }) {
   const [memories, setMemories] = useState([])
   const [newMemory, setNewMemory] = useState('')
   const [saving, setSaving] = useState(false)
@@ -153,11 +153,11 @@ export default function SongSheet({ song, onClose }) {
                 🎵
               </div>
             )}
-            <div style={{ overflow: 'hidden', paddingBottom: '4px' }}>
+            <div style={{ overflow: 'hidden', paddingBottom: '4px', flex: 1 }}>
               <p style={{ margin: 0, fontSize: '10px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '3px' }}>
                 {song.genre} {song.decade ? `· ${song.decade}` : ''}
               </p>
-              <h2 style={{ margin: '0 0 4px', fontSize: '18px', fontWeight: 700, lineHeight: 1.2, color: '#fff' }}>
+              <h2 style={{ margin: '0 0 4px', fontSize: '18px', fontWeight: 900, lineHeight: 1.2, color: '#fff' }}>
                 {song.title}
               </h2>
               <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.7)' }}>
@@ -166,50 +166,33 @@ export default function SongSheet({ song, onClose }) {
               {song.album && (
                 <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>{song.album}</p>
               )}
+
+              {/* Play button — only shown if track has a stream */}
+              {song.streamKey && (
+                <button
+                  onClick={() => {
+                    if (currentSong?.id === song.id) {
+                      onPlayPause()
+                    } else {
+                      onSongSelect(song)
+                    }
+                  }}
+                  style={{
+                    marginTop: '12px',
+                    background: '#fafafa', color: '#09090b', border: 'none',
+                    borderRadius: '9999px', padding: '7px 20px',
+                    fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  }}
+                >
+                  {currentSong?.id === song.id && isPlaying ? '⏸ Pause' : '▶ Play'}
+                </button>
+              )}
             </div>
           </div>
         </div>
 
         <div style={{ padding: '16px 24px 40px' }}>
-          {/* Cover art + title — hidden (moved to hero above) */}
-          <div style={{ display: 'none', gap: '20px', alignItems: 'flex-start', marginBottom: '24px' }}>
-            {artSrc ? (
-              <img
-                src={artSrc}
-                alt={song.title}
-                onError={() => setArtErrored(true)}
-                style={{
-                  width: '120px', height: '120px', borderRadius: '10px',
-                  objectFit: 'cover', flexShrink: 0,
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-                }}
-              />
-            ) : (
-              <div style={{
-                width: '120px', height: '120px', borderRadius: '10px',
-                background: gradient, flexShrink: 0,
-                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '36px',
-              }}>
-                🎵
-              </div>
-            )}
-            <div style={{ paddingTop: '8px', overflow: 'hidden' }}>
-              <p style={{ margin: 0, fontSize: '11px', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
-                {song.genre} {song.decade ? `· ${song.decade}` : ''}
-              </p>
-              <h2 style={{ margin: '0 0 6px', fontSize: '20px', fontWeight: 700, lineHeight: 1.2 }}>
-                {song.title}
-              </h2>
-              <p style={{ margin: 0, fontSize: '15px', color: '#a1a1aa' }}>
-                {song.artist || 'Unknown Artist'}
-              </p>
-              {song.album && (
-                <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#52525b' }}>{song.album}</p>
-              )}
-            </div>
-          </div>
 
 
 
