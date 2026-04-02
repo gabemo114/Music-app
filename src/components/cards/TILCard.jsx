@@ -7,14 +7,17 @@ export default function TILCard({ card, compact }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!fact.artist || !fact.song) {
+    if (!fact.artist) {
       setLoading(false)
       return
     }
-    fetchGeniusFact(fact.song, fact.artist)
+    // Use song title if available, fall back to just artist name
+    const title = fact.song || fact.artist
+    fetchGeniusFact(title, fact.artist)
       .then(result => {
         if (result?.fact) setGeniusFact(result)
       })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [fact.artist, fact.song])
 
