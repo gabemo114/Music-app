@@ -273,48 +273,68 @@ function cardsToPages(cards) {
   return pages
 }
 
+// Cap each card type to `n` and interleave evenly across types
+function interleave(pools) {
+  const result = []
+  const queues = pools.map(p => [...p])
+  let active = true
+  while (active) {
+    active = false
+    for (const q of queues) {
+      if (q.length > 0) {
+        result.push(q.shift())
+        active = true
+      }
+    }
+  }
+  return result
+}
+
 export function generateFeed(tracks, date = new Date()) {
   if (!tracks || tracks.length === 0) return []
 
   const rng = seededRandom(dateSeed(date))
   const rng2 = seededRandom(dateSeed(date, 42))
+  const rng3 = seededRandom(dateSeed(date, 77))
 
   const libraryArtists = [...new Set(tracks.map(t => t.artist).filter(Boolean))]
 
-  const rng3 = seededRandom(dateSeed(date, 77))
-
-  const tilCards = buildTILCards(libraryArtists, rng)
+  // Cap each pool to ~8 cards so no type dominates
+  const CAP = 8
   const anniversaryCards = buildAnniversaryCards(tracks, date, rng)
-  const chartCards = buildChartTopperCards(tracks, rng)
-  const moodCards = buildMoodCards(tracks, rng)
-  const artistCards = buildArtistCards(tracks, rng)
-  const albumCards = buildAlbumOfTheDayCards(tracks, rng)
-  const promptCards = buildJournalPromptCards(tracks, rng)
-
-  // On This Day leads if present, then shuffle the rest
   const onThisDayCards = anniversaryCards.filter(c => c.isOnThisDay)
-  const otherCards = shuffle([
-    ...anniversaryCards.filter(c => !c.isOnThisDay),
-    ...tilCards,
-    ...chartCards,
-    ...moodCards,
-    ...artistCards,
-    ...albumCards,
-    ...promptCards,
-  ], rng2)
+  const roundCards = anniversaryCards.filter(c => !c.isOnThisDay).slice(0, CAP)
+  const tilCards = buildTILCards(libraryArtists, rng).slice(0, CAP)
+  const chartCards = buildChartTopperCards(tracks, rng).slice(0, CAP)
+  const moodCards = buildMoodCards(tracks, rng).slice(0, CAP)
+  const artistCards = buildArtistCards(tracks, rng).slice(0, CAP)
+  const albumCards = buildAlbumOfTheDayCards(tracks, rng).slice(0, CAP)
+  const promptCards = buildJournalPromptCards(tracks, rng).slice(0, CAP)
 
-  const allCards = [...onThisDayCards, ...otherCards]
+  // Interleave evenly so card types rotate, not cluster
+  const interleavedCards = interleave([
+    roundCards,
+    tilCards,
+    artistCards,
+    albumCards,
+    moodCards,
+    chartCards,
+    promptCards,
+  ])
 
-  // Second round for infinite scroll
-  const allCards2 = shuffle([
-    ...buildAnniversaryCards(tracks, date, rng2).filter(c => !c.isOnThisDay),
-    ...buildTILCards(libraryArtists, rng2),
-    ...buildChartTopperCards(tracks, rng2),
-    ...buildMoodCards(tracks, rng2),
-    ...buildArtistCards(tracks, rng2),
-    ...buildAlbumOfTheDayCards(tracks, rng2),
-    ...buildJournalPromptCards(tracks, rng2),
-  ], rng3)
+  // On This Day always leads
+  const allCards = [...onThisDayCards, ...interleavedCards]
 
-  return cardsToPages([...allCards, ...allCards2])
+  // Second round for infinite scroll — different seed, same balance
+  const allCards2 = interleave([
+    buildAnniversaryCards(tracks, date, rng2).filter(c => !c.isOnThisDay).slice(0, CAP),
+    buildTILCards(libraryArtists, rng2).slice(0, CAP),
+    buildArtistCards(tracks, rng2).slice(0, CAP),
+    buildAlbumOfTheDayCards(tracks, rng2).slice(0, CAP),
+    buildMoodCards(tracks, rng2).slice(0, CAP),
+    buildChartTopperCards(tracks, rng2).slice(0, CAP),
+    buildJournalPromptCards(tracks, rng2).slice(0, CAP),
+  ])
+
+  return cardsToPages([...allCards, ...shuffle(allCards2, rng3)])
 }
