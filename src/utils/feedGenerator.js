@@ -6,7 +6,7 @@ const JOURNAL_PROMPTS = [
   'What does this song remind you of?',
   'Who introduced you to this artist?',
   'What were you going through when this album came out?',
-  "What's the memory that comes to mind instantly?",
+  "What is the memory that comes to mind instantly?",
   'When do you listen to this most?',
   'What would you tell someone hearing this for the first time?',
   'Has your feeling about this song changed over time?',
