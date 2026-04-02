@@ -38,10 +38,20 @@ function guessDecade(year) {
   return `${decade}s`
 }
 
-function mapTrack(t) {
+function mapBlurColors(blur) {
+  if (!blur) return null
+  return {
+    topLeft: `#${blur.topLeft}`,
+    topRight: `#${blur.topRight}`,
+    bottomLeft: `#${blur.bottomLeft}`,
+    bottomRight: `#${blur.bottomRight}`,
+  }
+}
+
+function mapTrack(t, albumMap = {}) {
   const part = t.Media?.[0]?.Part?.[0]
   const year = t.parentYear || t.year || null
-  const blur = t.UltraBlurColors || null
+  const albumData = albumMap[t.parentRatingKey] || {}
   return {
     id: `plex-${t.ratingKey}`,
     plexKey: t.ratingKey,
@@ -58,25 +68,51 @@ function mapTrack(t) {
     artistThumb: t.grandparentThumb || null,
     artistArt: t.art || t.grandparentArt || null,
     ratingCount: t.ratingCount || 0,
-    blurColors: blur ? {
-      topLeft: `#${blur.topLeft}`,
-      topRight: `#${blur.topRight}`,
-      bottomLeft: `#${blur.bottomLeft}`,
-      bottomRight: `#${blur.bottomRight}`,
-    } : null,
+    blurColors: albumData.blurColors || mapBlurColors(t.UltraBlurColors),
+    releaseDate: albumData.releaseDate || null,
     streamKey: part?.key || null,
     billboard_peak: null,
     billboard_peak_date: null,
   }
 }
 
+async function fetchAllAlbums() {
+  const albumMap = {}
+  let start = 0
+  while (true) {
+    const res = await fetch(
+      plexUrl(`/library/sections/${MUSIC_SECTION}/all`, {
+        type: 9,
+        'X-Plex-Container-Start': start,
+        'X-Plex-Container-Size': PAGE_SIZE,
+      }),
+      { headers: plexHeaders() }
+    )
+    const data = await res.json()
+    const albums = data.MediaContainer?.Metadata || []
+    if (albums.length === 0) break
+    for (const a of albums) {
+      albumMap[a.ratingKey] = {
+        blurColors: mapBlurColors(a.UltraBlurColors),
+        releaseDate: a.originallyAvailableAt || null,
+      }
+    }
+    if (albums.length < PAGE_SIZE) break
+    start += PAGE_SIZE
+  }
+  return albumMap
+}
+
 export async function fetchAllTracks(onProgress) {
-  // Get total count — fall back to `size` if `totalSize` is absent
-  const countRes = await fetch(
-    plexUrl(`/library/sections/${MUSIC_SECTION}/all`, { type: 10, 'X-Plex-Container-Size': 0 }),
-    { headers: plexHeaders() }
-  )
-  const countData = await countRes.json()
+  // Fetch albums and track count in parallel
+  const [albumMap, countData] = await Promise.all([
+    fetchAllAlbums(),
+    fetch(
+      plexUrl(`/library/sections/${MUSIC_SECTION}/all`, { type: 10, 'X-Plex-Container-Size': 0 }),
+      { headers: plexHeaders() }
+    ).then(r => r.json()),
+  ])
+
   const mc0 = countData.MediaContainer
   const total = mc0.totalSize ?? mc0.size ?? 0
 
@@ -94,7 +130,7 @@ export async function fetchAllTracks(onProgress) {
     const firstMc = firstData.MediaContainer
     const firstTracks = firstMc.Metadata || []
     const knownTotal = firstMc.totalSize ?? firstMc.size ?? firstTracks.length
-    const allTracks = firstTracks.map(mapTrack)
+    const allTracks = firstTracks.map(t => mapTrack(t, albumMap))
     if (onProgress) onProgress(allTracks.length, knownTotal)
 
     const remainingPages = Math.ceil((knownTotal - PAGE_SIZE) / PAGE_SIZE)
@@ -110,7 +146,7 @@ export async function fetchAllTracks(onProgress) {
       const data = await res.json()
       const tracks = data.MediaContainer.Metadata || []
       if (tracks.length === 0) break
-      allTracks.push(...tracks.map(mapTrack))
+      allTracks.push(...tracks.map(t => mapTrack(t, albumMap)))
       if (onProgress) onProgress(allTracks.length, knownTotal)
     }
     return allTracks
@@ -131,7 +167,7 @@ export async function fetchAllTracks(onProgress) {
     const data = await res.json()
     const tracks = data.MediaContainer.Metadata || []
     if (tracks.length === 0) break
-    allTracks.push(...tracks.map(mapTrack))
+    allTracks.push(...tracks.map(t => mapTrack(t, albumMap)))
     if (onProgress) onProgress(allTracks.length, total)
   }
 

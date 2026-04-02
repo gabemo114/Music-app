@@ -50,37 +50,57 @@ function buildTILCards(libraryArtists, rng) {
 function buildAnniversaryCards(tracks, date, rng) {
   const currentYear = date.getFullYear()
   const currentMonth = date.getMonth() + 1
+  const currentDay = date.getDate()
   const cards = []
   const seen = new Set()
 
-  // Group tracks by artist+year to avoid duplicates
   for (const track of tracks) {
-    if (!track.year || !track.artist) continue
-    const key = `${track.artist}-${track.year}`
+    if (!track.artist) continue
+    const key = `${track.artist}-${track.year || track.releaseDate}`
     if (seen.has(key)) continue
 
-    const yearsAgo = currentYear - track.year
+    // On This Day — exact month/day match from releaseDate
+    if (track.releaseDate) {
+      const [releaseYear, releaseMonth, releaseDay] = track.releaseDate.split('-').map(Number)
+      const yearsAgo = currentYear - releaseYear
+      if (yearsAgo > 0 && releaseMonth === currentMonth && releaseDay === currentDay) {
+        seen.add(key)
+        cards.push({
+          type: 'anniversary',
+          id: `onthisday-${track.id}`,
+          song: track,
+          yearsAgo,
+          label: `On This Day, ${yearsAgo} Year${yearsAgo === 1 ? '' : 's'} Ago`,
+          isOnThisDay: true,
+        })
+        continue
+      }
+    }
+
+    // Round anniversary fallback (5/10/20... years) using year only
+    const year = track.year
+    if (!year) continue
+    const yearsAgo = currentYear - year
     if (yearsAgo <= 0) continue
-
-    // Prioritize round anniversaries (5, 10, 20, 25, 30...) or "this year's month" matches
     const isRound = yearsAgo % 5 === 0
-    const isMilestone = yearsAgo % 10 === 0
 
-    if (isRound || isMilestone) {
+    if (isRound) {
       seen.add(key)
       cards.push({
         type: 'anniversary',
         id: `anniversary-${track.id}`,
         song: track,
         yearsAgo,
-        label: isMilestone
-          ? `${yearsAgo} Year Anniversary`
-          : `${yearsAgo} Years Ago`,
+        label: yearsAgo % 10 === 0 ? `${yearsAgo} Year Anniversary` : `${yearsAgo} Years Ago`,
+        isOnThisDay: false,
       })
     }
   }
 
-  return shuffle(cards, rng).slice(0, 20)
+  // On This Day cards always lead
+  const onThisDay = cards.filter(c => c.isOnThisDay)
+  const roundAnniversaries = shuffle(cards.filter(c => !c.isOnThisDay), rng).slice(0, 20)
+  return [...onThisDay, ...roundAnniversaries]
 }
 
 function buildChartTopperCards(tracks, rng) {

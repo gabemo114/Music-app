@@ -16,7 +16,7 @@ function blurToGradient(blurColors) {
 }
 
 export default function AnniversaryCard({ card, onSelect, compact }) {
-  const { song, label, yearsAgo } = card
+  const { song, label, yearsAgo, isOnThisDay } = card
   const artSrc = song.thumb ? albumArtUrl(song.thumb, compact ? 200 : 400) : null
   const gradient = blurToGradient(song.blurColors) || DECADE_GRADIENTS[song.decade] || DECADE_GRADIENTS['1960s']
 
@@ -65,7 +65,7 @@ export default function AnniversaryCard({ card, onSelect, compact }) {
             padding: '4px 12px', marginBottom: compact ? '12px' : '20px',
           }}>
             <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.9)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-              🕰 {label}
+              {isOnThisDay ? '📅' : '🕰'} {label}
             </span>
           </div>
 
