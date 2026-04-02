@@ -181,14 +181,14 @@ export default function DiscoveryFeed({ onSongSelect }) {
         height: '100%',
         transform: `translateY(${dragOffset}px)`,
         transition: isDragging.current ? 'none' : 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
-        padding: '12px 16px', boxSizing: 'border-box',
+        padding: '8px', boxSizing: 'border-box',
       }}>
         {currentPage?.layout === 'single' ? (
           <div style={{ height: '100%' }}>
             {renderCard(currentPage.cards[0], onSongSelect, setSelectedMood)}
           </div>
         ) : (
-          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {currentPage?.cards.map(card => (
               <div key={card.id} style={{ flex: 1 }}>
                 {renderCard(card, onSongSelect, setSelectedMood, true)}

@@ -1,91 +1,43 @@
 import { albumArtUrl } from '../../lib/plex'
-
-function blurToGradient(blurColors, fallback) {
-  if (!blurColors) return fallback
-  return `linear-gradient(160deg, ${blurColors.topLeft} 0%, ${blurColors.topRight} 50%, ${blurColors.bottomRight} 100%)`
-}
+import CardShell from './CardShell'
 
 export default function MoodCard({ card, onMoodSelect, compact }) {
   const { mood } = card
-  const artSrc = mood.coverThumb ? albumArtUrl(mood.coverThumb, compact ? 200 : 400) : null
-  const gradient = blurToGradient(mood.blurColors, mood.gradient)
+  const bgSrc = mood.coverThumb ? albumArtUrl(mood.coverThumb, compact ? 400 : 800) : null
 
   return (
-    <div
+    <CardShell
+      bgSrc={bgSrc}
+      blurColors={mood.blurColors}
+      compact={compact}
       onClick={() => onMoodSelect(mood)}
-      style={{
-        width: '100%', height: '100%',
-        background: gradient,
-        borderRadius: compact ? '14px' : '20px',
-        display: 'flex', flexDirection: 'column',
-        justifyContent: 'space-between',
-        cursor: 'pointer', overflow: 'hidden', position: 'relative',
-      }}
+      badge="🎧 Mood"
     >
-      {/* Album art blurred background */}
-      {artSrc && (
-        <div style={{
-          position: 'absolute', inset: 0,
-          backgroundImage: `url(${artSrc})`,
-          backgroundSize: 'cover', backgroundPosition: 'center',
-          opacity: 0.2, filter: 'blur(3px)', transform: 'scale(1.05)',
-        }} />
-      )}
-
-      {/* Bottom scrim */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0, height: '65%',
-        background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)',
-        pointerEvents: 'none',
-      }} />
-
-      {/* Content */}
-      <div style={{ position: 'relative', padding: compact ? '16px' : '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%', boxSizing: 'border-box' }}>
-        {/* Top badge */}
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: '6px',
-          background: 'rgba(255,255,255,0.15)', borderRadius: '9999px',
-          padding: '4px 12px', alignSelf: 'flex-start',
-        }}>
-          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.9)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            🎧 Mood
-          </span>
-        </div>
-
-        {/* Center */}
-        <div>
-          <div style={{ fontSize: compact ? '40px' : '60px', lineHeight: 1, marginBottom: '10px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '8px' }}>
+        <div style={{ overflow: 'hidden' }}>
+          <div style={{ fontSize: compact ? '32px' : '44px', lineHeight: 1, marginBottom: '6px' }}>
             {mood.emoji}
           </div>
           <h2 style={{
-            margin: 0, color: '#fff',
+            margin: '0 0 3px', color: '#fff',
             fontSize: compact ? '18px' : '26px',
-            fontWeight: 800, letterSpacing: '-0.5px',
+            fontWeight: 900, letterSpacing: '-0.5px', lineHeight: 1.1,
           }}>
             {mood.name}
           </h2>
-          <p style={{
-            margin: compact ? '4px 0 0' : '6px 0 0',
-            color: 'rgba(255,255,255,0.65)',
-            fontSize: compact ? '12px' : '14px',
-          }}>
-            {mood.description}
+          <p style={{ margin: 0, color: 'rgba(255,255,255,0.55)', fontSize: compact ? '11px' : '13px' }}>
+            {mood.trackCount || mood.songIds?.length || 0} songs
           </p>
         </div>
-
-        {/* Bottom */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>
-            {mood.trackCount || mood.songIds?.length || 0} songs
-          </span>
-          <div style={{
-            background: 'rgba(255,255,255,0.2)', borderRadius: '9999px',
-            padding: '5px 14px', fontSize: '12px', fontWeight: 600, color: '#fff',
-          }}>
-            Play →
-          </div>
+        <div style={{
+          flexShrink: 0,
+          background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)',
+          borderRadius: '9999px', padding: '8px 16px',
+          fontSize: '13px', fontWeight: 700, color: '#fff',
+        }}>
+          Play →
         </div>
       </div>
-    </div>
+    </CardShell>
   )
 }
