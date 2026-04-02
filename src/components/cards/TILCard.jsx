@@ -43,16 +43,30 @@ export default function TILCard({ card, compact }) {
 
       {/* Top */}
       <div>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: '6px',
-          background: 'rgba(124,58,237,0.15)',
-          border: '1px solid rgba(124,58,237,0.3)',
-          borderRadius: '9999px',
-          padding: '4px 12px', marginBottom: compact ? '14px' : '24px',
-        }}>
-          <span style={{ fontSize: '10px', color: '#a78bfa', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            💡 Did You Know
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: compact ? '14px' : '24px' }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            background: 'rgba(124,58,237,0.15)',
+            border: '1px solid rgba(124,58,237,0.3)',
+            borderRadius: '9999px',
+            padding: '4px 12px',
+          }}>
+            <span style={{ fontSize: '10px', color: '#a78bfa', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              💡 Did You Know
+            </span>
+          </div>
+          {!loading && isLive && (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '5px',
+              background: 'rgba(255,204,0,0.12)',
+              border: '1px solid rgba(255,204,0,0.3)',
+              borderRadius: '9999px',
+              padding: '4px 10px',
+            }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#ffd700' }}>G</span>
+              <span style={{ fontSize: '10px', color: 'rgba(255,215,0,0.8)', fontWeight: 600, letterSpacing: '0.05em' }}>Genius</span>
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -100,9 +114,6 @@ export default function TILCard({ card, compact }) {
               )}
             </div>
           </div>
-          {isLive && (
-            <span style={{ fontSize: '10px', color: '#52525b', letterSpacing: '0.05em' }}>via Genius</span>
-          )}
         </div>
       )}
     </div>
