@@ -5,6 +5,9 @@ import AnniversaryCard from '../components/cards/AnniversaryCard'
 import TILCard from '../components/cards/TILCard'
 import ChartTopperCard from '../components/cards/ChartTopperCard'
 import MoodCard from '../components/cards/MoodCard'
+import ArtistCard from '../components/cards/ArtistCard'
+import AlbumOfTheDayCard from '../components/cards/AlbumOfTheDayCard'
+import JournalPromptCard from '../components/cards/JournalPromptCard'
 import MoodPlaylist from '../components/MoodPlaylist'
 
 const SNAP_THRESHOLD = 60
@@ -20,6 +23,12 @@ function renderCard(card, onSongSelect, onMoodSelect, compact = false) {
       return <ChartTopperCard card={card} onSelect={onSongSelect} compact={compact} />
     case 'mood':
       return <MoodCard card={card} onMoodSelect={onMoodSelect} compact={compact} />
+    case 'artist':
+      return <ArtistCard card={card} onSelect={onSongSelect} compact={compact} />
+    case 'album_of_day':
+      return <AlbumOfTheDayCard card={card} onSelect={onSongSelect} compact={compact} />
+    case 'journal_prompt':
+      return <JournalPromptCard card={card} onSelect={onSongSelect} compact={compact} />
     default:
       return null
   }

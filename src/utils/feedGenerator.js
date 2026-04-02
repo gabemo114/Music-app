@@ -1,6 +1,17 @@
 import { TIL_FACTS_BY_ARTIST, FALLBACK_FACTS } from '../data/tilFacts'
 import { MOOD_DEFINITIONS } from '../data/moods'
 
+const JOURNAL_PROMPTS = [
+  'Where were you the first time you heard this?',
+  'What does this song remind you of?',
+  'Who introduced you to this artist?',
+  'What were you going through when this album came out?',
+  "What's the memory that comes to mind instantly?",
+  'When do you listen to this most?',
+  'What would you tell someone hearing this for the first time?',
+  'Has your feeling about this song changed over time?',
+]
+
 function seededRandom(seed) {
   let s = seed
   return function () {
@@ -170,6 +181,76 @@ function buildMoodCards(tracks, rng) {
   return shuffle(cards, rng)
 }
 
+function buildArtistCards(tracks, rng) {
+  // Group by artist, pick one representative track per artist that has a bio
+  const artistMap = {}
+  for (const track of tracks) {
+    if (!track.artist || !track.artistSummary) continue
+    if (!artistMap[track.artist]) {
+      artistMap[track.artist] = {
+        name: track.artist,
+        summary: track.artistSummary,
+        country: track.artistCountry,
+        genre: track.genre,
+        thumb: track.artistThumb,
+        art: track.artistArt,
+        blurColors: track.artistBlurColors,
+      }
+    }
+    // Prefer the representative track to have art
+    if (!artistMap[track.artist]._track || track.thumb) {
+      artistMap[track.artist]._track = track
+    }
+  }
+  const cards = Object.values(artistMap)
+    .filter(a => a.summary && a._track)
+    .map(a => ({
+      type: 'artist',
+      id: `artist-${a.name}`,
+      artist: a,
+      representativeTrack: a._track,
+    }))
+  return shuffle(cards, rng)
+}
+
+function buildAlbumOfTheDayCards(tracks, rng) {
+  // Group tracks into albums
+  const albumMap = {}
+  for (const track of tracks) {
+    const key = `${track.grandparentKey}-${track.album}`
+    if (!albumMap[key]) {
+      albumMap[key] = {
+        title: track.album || 'Unknown Album',
+        artist: track.artist || 'Unknown Artist',
+        year: track.year,
+        decade: track.decade,
+        genre: track.genre,
+        thumb: track.thumb,
+        blurColors: track.blurColors,
+        tracks: [],
+      }
+    }
+    albumMap[key].tracks.push(track)
+  }
+  const albums = Object.values(albumMap).filter(a => a.tracks.length >= 3 && a.thumb)
+  return shuffle(albums, rng).slice(0, 15).map(album => ({
+    type: 'album_of_day',
+    id: `album-${album.title}-${album.artist}`,
+    album,
+  }))
+}
+
+function buildJournalPromptCards(tracks, rng) {
+  // Pick random tracks as journal prompt targets — prefer tracks with blur colors (more visual)
+  const candidates = shuffle(tracks.filter(t => t.artist && t.thumb), rng)
+  return candidates.slice(0, 10).map((track, i) => ({
+    type: 'journal_prompt',
+    id: `prompt-${track.id}`,
+    song: track,
+    prompt: JOURNAL_PROMPTS[i % JOURNAL_PROMPTS.length],
+  }))
+}
+
 function cardsToPages(cards) {
   const pages = []
   let i = 0
@@ -200,21 +281,40 @@ export function generateFeed(tracks, date = new Date()) {
 
   const libraryArtists = [...new Set(tracks.map(t => t.artist).filter(Boolean))]
 
+  const rng3 = seededRandom(dateSeed(date, 77))
+
   const tilCards = buildTILCards(libraryArtists, rng)
   const anniversaryCards = buildAnniversaryCards(tracks, date, rng)
   const chartCards = buildChartTopperCards(tracks, rng)
   const moodCards = buildMoodCards(tracks, rng)
+  const artistCards = buildArtistCards(tracks, rng)
+  const albumCards = buildAlbumOfTheDayCards(tracks, rng)
+  const promptCards = buildJournalPromptCards(tracks, rng)
 
-  const allCards = shuffle(
-    [...anniversaryCards, ...tilCards, ...chartCards, ...moodCards],
-    rng2
-  )
+  // On This Day leads if present, then shuffle the rest
+  const onThisDayCards = anniversaryCards.filter(c => c.isOnThisDay)
+  const otherCards = shuffle([
+    ...anniversaryCards.filter(c => !c.isOnThisDay),
+    ...tilCards,
+    ...chartCards,
+    ...moodCards,
+    ...artistCards,
+    ...albumCards,
+    ...promptCards,
+  ], rng2)
 
-  // Second round with different seed for infinite scroll
-  const allCards2 = shuffle(
-    [...buildAnniversaryCards(tracks, date, rng2), ...buildTILCards(libraryArtists, rng2), ...buildChartTopperCards(tracks, rng2), ...buildMoodCards(tracks, rng2)],
-    seededRandom(dateSeed(date, 99))
-  )
+  const allCards = [...onThisDayCards, ...otherCards]
+
+  // Second round for infinite scroll
+  const allCards2 = shuffle([
+    ...buildAnniversaryCards(tracks, date, rng2).filter(c => !c.isOnThisDay),
+    ...buildTILCards(libraryArtists, rng2),
+    ...buildChartTopperCards(tracks, rng2),
+    ...buildMoodCards(tracks, rng2),
+    ...buildArtistCards(tracks, rng2),
+    ...buildAlbumOfTheDayCards(tracks, rng2),
+    ...buildJournalPromptCards(tracks, rng2),
+  ], rng3)
 
   return cardsToPages([...allCards, ...allCards2])
 }

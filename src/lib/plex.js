@@ -48,10 +48,11 @@ function mapBlurColors(blur) {
   }
 }
 
-function mapTrack(t, albumMap = {}) {
+function mapTrack(t, albumMap = {}, artistMap = {}) {
   const part = t.Media?.[0]?.Part?.[0]
   const year = t.parentYear || t.year || null
   const albumData = albumMap[t.parentRatingKey] || {}
+  const artistData = artistMap[t.grandparentRatingKey] || {}
   return {
     id: `plex-${t.ratingKey}`,
     plexKey: t.ratingKey,
@@ -61,12 +62,15 @@ function mapTrack(t, albumMap = {}) {
     album: t.parentTitle,
     year,
     decade: guessDecade(year),
-    genre: t.Genre?.[0]?.tag || null,
+    genre: t.Genre?.[0]?.tag || artistData.genre || null,
     duration: t.duration ? Math.round(t.duration / 1000) : null,
     track: t.index,
     thumb: t.parentThumb || t.thumb || null,
-    artistThumb: t.grandparentThumb || null,
-    artistArt: t.art || t.grandparentArt || null,
+    artistThumb: t.grandparentThumb || artistData.thumb || null,
+    artistArt: t.art || t.grandparentArt || artistData.art || null,
+    artistSummary: artistData.summary || null,
+    artistCountry: artistData.country || null,
+    artistBlurColors: artistData.blurColors || null,
     ratingCount: t.ratingCount || 0,
     blurColors: albumData.blurColors || mapBlurColors(t.UltraBlurColors),
     releaseDate: albumData.releaseDate || null,
@@ -74,6 +78,38 @@ function mapTrack(t, albumMap = {}) {
     billboard_peak: null,
     billboard_peak_date: null,
   }
+}
+
+async function fetchAllArtists() {
+  const artistMap = {}
+  let start = 0
+  while (true) {
+    const res = await fetch(
+      plexUrl(`/library/sections/${MUSIC_SECTION}/all`, {
+        type: 8,
+        'X-Plex-Container-Start': start,
+        'X-Plex-Container-Size': PAGE_SIZE,
+      }),
+      { headers: plexHeaders() }
+    )
+    const data = await res.json()
+    const artists = data.MediaContainer?.Metadata || []
+    if (artists.length === 0) break
+    for (const a of artists) {
+      artistMap[a.ratingKey] = {
+        name: a.title,
+        summary: a.summary || null,
+        country: a.Country?.[0]?.tag || null,
+        genre: a.Genre?.[0]?.tag || null,
+        thumb: a.thumb || null,
+        art: a.art || null,
+        blurColors: mapBlurColors(a.UltraBlurColors),
+      }
+    }
+    if (artists.length < PAGE_SIZE) break
+    start += PAGE_SIZE
+  }
+  return artistMap
 }
 
 async function fetchAllAlbums() {
@@ -104,9 +140,10 @@ async function fetchAllAlbums() {
 }
 
 export async function fetchAllTracks(onProgress) {
-  // Fetch albums and track count in parallel
-  const [albumMap, countData] = await Promise.all([
+  // Fetch albums, artists, and track count in parallel
+  const [albumMap, artistMap, countData] = await Promise.all([
     fetchAllAlbums(),
+    fetchAllArtists(),
     fetch(
       plexUrl(`/library/sections/${MUSIC_SECTION}/all`, { type: 10, 'X-Plex-Container-Size': 0 }),
       { headers: plexHeaders() }
@@ -130,7 +167,7 @@ export async function fetchAllTracks(onProgress) {
     const firstMc = firstData.MediaContainer
     const firstTracks = firstMc.Metadata || []
     const knownTotal = firstMc.totalSize ?? firstMc.size ?? firstTracks.length
-    const allTracks = firstTracks.map(t => mapTrack(t, albumMap))
+    const allTracks = firstTracks.map(t => mapTrack(t, albumMap, artistMap))
     if (onProgress) onProgress(allTracks.length, knownTotal)
 
     const remainingPages = Math.ceil((knownTotal - PAGE_SIZE) / PAGE_SIZE)
@@ -146,7 +183,7 @@ export async function fetchAllTracks(onProgress) {
       const data = await res.json()
       const tracks = data.MediaContainer.Metadata || []
       if (tracks.length === 0) break
-      allTracks.push(...tracks.map(t => mapTrack(t, albumMap)))
+      allTracks.push(...tracks.map(t => mapTrack(t, albumMap, artistMap)))
       if (onProgress) onProgress(allTracks.length, knownTotal)
     }
     return allTracks
@@ -167,7 +204,7 @@ export async function fetchAllTracks(onProgress) {
     const data = await res.json()
     const tracks = data.MediaContainer.Metadata || []
     if (tracks.length === 0) break
-    allTracks.push(...tracks.map(t => mapTrack(t, albumMap)))
+    allTracks.push(...tracks.map(t => mapTrack(t, albumMap, artistMap)))
     if (onProgress) onProgress(allTracks.length, total)
   }
 
