@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { db } from '../lib/firebase'
 import { albumArtUrl, artistArtUrl } from '../lib/plex'
 import {
@@ -34,6 +34,25 @@ export default function SongSheet({ song, onClose, currentSong, isPlaying, onPla
   const [newMemory, setNewMemory] = useState('')
   const [saving, setSaving] = useState(false)
   const [artErrored, setArtErrored] = useState(false)
+  const [closing, setClosing] = useState(false)
+  const closeTimerRef = useRef(null)
+
+  function handleClose() {
+    setClosing(true)
+    closeTimerRef.current = setTimeout(() => {
+      setClosing(false)
+      onClose()
+    }, 280)
+  }
+
+  // Reset closing state if song changes (e.g. new song opened while closing)
+  useEffect(() => {
+    return () => clearTimeout(closeTimerRef.current)
+  }, [])
+
+  useEffect(() => {
+    if (song) setClosing(false)
+  }, [song])
 
   useEffect(() => {
     setArtErrored(false)
@@ -76,11 +95,12 @@ export default function SongSheet({ song, onClose, currentSong, isPlaying, onPla
     <>
       {/* Backdrop */}
       <div
-        onClick={onClose}
-        onTouchEnd={(e) => { e.stopPropagation(); onClose() }}
+        onClick={handleClose}
+        onTouchEnd={(e) => { e.stopPropagation(); handleClose() }}
         style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
           zIndex: 40, backdropFilter: 'blur(4px)',
+          animation: closing ? 'fadeOut 0.28s ease-in forwards' : 'fadeIn 0.25s ease-out',
         }}
       />
 
@@ -90,9 +110,14 @@ export default function SongSheet({ song, onClose, currentSong, isPlaying, onPla
         background: '#09090b', borderTop: '1px solid #27272a',
         borderRadius: '16px 16px 0 0',
         zIndex: 50, maxHeight: '92vh', overflowY: 'auto',
-        animation: 'slideUp 0.25s ease-out',
+        animation: closing ? 'slideDown 0.28s ease-in forwards' : 'slideUp 0.25s ease-out',
       }}>
-        <style>{`@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }`}</style>
+        <style>{`
+          @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+          @keyframes slideDown { from { transform: translateY(0); } to { transform: translateY(100%); } }
+          @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+          @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        `}</style>
 
         {/* Hero header with artist background art */}
         <div style={{
@@ -119,7 +144,7 @@ export default function SongSheet({ song, onClose, currentSong, isPlaying, onPla
 
           {/* Close */}
           <button
-            onClick={onClose}
+            onClick={handleClose}
             style={{
               position: 'absolute', top: '16px', right: '20px', zIndex: 1,
               background: 'rgba(0,0,0,0.4)', border: 'none', color: '#fff',

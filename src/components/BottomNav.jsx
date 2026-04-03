@@ -2,6 +2,8 @@ export default function BottomNav({ activeTab, onChange }) {
   const tabs = [
     { id: 'discover', label: 'Discover', icon: '✦' },
     { id: 'library', label: 'Library', icon: '♫' },
+    { id: 'memoir', label: 'Memoir', icon: '✒' },
+    { id: 'mixtape', label: 'Mixtape', icon: '⋮' },
   ]
 
   return (

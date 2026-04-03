@@ -18,7 +18,7 @@ Epoch is a personal music app built on top of a user's existing music library (c
 
 - **Mood:** Dark and moody — late night, intimate, not bright or cheerful
 - **Color:** Near-black / deep charcoal backgrounds. Album art is the only real color on screen
-- **Typography:** Serif for emotional content (journal entries, headlines). Sans-serif for utility (tabs, metadata, timestamps)
+- **Typography:** DM Serif Display (serif) for emotional content — journal entries, headlines. DM Sans (sans-serif) for utility — tabs, metadata, timestamps
 - **Cards:** Dark frosted glass or semi-transparent surfaces. Album art bleeds into backgrounds with blur + dark overlay
 - **Ambient color:** The dominant color of the current album art subtly tints the UI behind it
 - **Reference feel:** Editorial, like a music magazine — not a utility app
@@ -31,15 +31,14 @@ Epoch is a personal music app built on top of a user's existing music library (c
 
 ---
 
-## Core Navigation (3 Tabs)
+## Core Navigation (4 Tabs)
 
 | Tab | Purpose |
 |---|---|
 | Home | Editorial discovery feed — always something new |
 | Library | Your full album grid — browse and explore |
 | Memoir | Your journal entries collected — your story over time |
-
-> **Future tab:** Mixtape may become a 4th tab given its distinct purpose
+| Mixtape | Curated playlists authored for someone else |
 
 ---
 
@@ -85,9 +84,9 @@ The feed is editorial and personal. All content is sourced from or related to th
 | Did You Know | Genius-powered fact about a song in your library | Genius API |
 | On This Day | "X was released N years ago today — it's in your library" | Release date (Plex `originallyAvailableAt`) |
 | Journal Prompt | "You've never written about this song" — nudge toward a specific unwritten track | Internal |
-| New Release | New music from artists already in your library | Spotify API / MusicBrainz |
+| New Release | New music from artists already in your library | MusicBrainz API |
 | Album of the Day | Spotlight a full album — invite a full listen | Internal / Plex |
-| Artist | Fun fact about an artist + related artists you may not know | Last.fm / MusicBrainz |
+| Artist | Fun fact about an artist + related artists you may not know | Last.fm API |
 | Critic's Pick | Weekly critically acclaimed new releases | albumoftheyear.org / Metacritic |
 
 ---
@@ -118,7 +117,9 @@ A curated playlist format built for sharing. Fundamentally different from the pr
 - Receiving a Mixtape is an experience: song → your note → Genius fact underneath
 - A Mixtape is an authored object — it has a title, a recipient, a mood
 
-**Object structure (TBD):** title, recipient name, cover art (auto or custom), ordered list of songs each with a mixtape note, share method (link? in-app? export?)
+**Sharing:** Shareable link — no Epoch account needed to view. Account required to create.
+
+**Object structure (TBD):** title, recipient name, cover art (auto or custom), ordered list of songs each with a mixtape note
 
 ---
 
@@ -136,20 +137,22 @@ A curated playlist format built for sharing. Fundamentally different from the pr
 
 ---
 
-## Open Decisions
+## Resolved Decisions
 
-- Genius API for Did You Know — rate limits, querying by song/artist
-- New Release data source — Spotify API or MusicBrainz
-- Artist data source — Last.fm or MusicBrainz for bios and related artists
-- On This Day logic — ✅ resolved: using Plex `originallyAvailableAt` from album endpoint
-- Critic's Pick cadence — weekly drop, likely Monday
-- Feed handling for new user with zero journal entries
-- Mixtape sharing mechanism — shareable link, in-app experience, or export
-- Whether recipients need an Epoch account to view a Mixtape
-- Mixtape navigation placement — own tab (4th) or nested inside Library
-- Typeface selection — serif + sans-serif pairing for Epoch visual language
-- Multi-library support beyond Plex (Spotify, Apple Music — future)
-- Multi-user accounts and cloud-stored journal entries (future)
+| Decision | Resolution |
+|---|---|
+| Genius API | ✅ Keep as-is — integrated, working |
+| New Release data source | ✅ MusicBrainz (free, no auth) |
+| Artist data source | ✅ Last.fm (bios, similar artists) — needs `VITE_LASTFM_KEY` |
+| On This Day logic | ✅ Plex `originallyAvailableAt` from album endpoint |
+| Critic's Pick cadence | ✅ Friday + Monday drops, check for changes before refreshing |
+| New user feed (zero entries) | ✅ Single track invitation card — personal, not generic empty state |
+| Mixtape sharing | ✅ Shareable link — no account needed to view |
+| Mixtape recipients | ✅ No Epoch account required to view |
+| Mixtape navigation | ✅ Own tab (4th) |
+| Typeface | ✅ DM Serif Display (serif) + DM Sans (sans-serif) |
+| Multi-library support | 🔮 Future — Spotify, Apple Music |
+| Multi-user / cloud journals | 🔮 Future |
 
 ---
 
@@ -157,6 +160,7 @@ A curated playlist format built for sharing. Fundamentally different from the pr
 
 - **Frontend:** React + Vite, deployed to GitHub Pages (`/Music-app/`)
 - **Styling:** Inline styles + Tailwind CSS via `@tailwindcss/vite`
+- **Fonts:** DM Serif Display + DM Sans via Google Fonts
 - **Music library:** Plex Media Server API
   - Server: configured via `VITE_PLEX_SERVER` env var
   - Music section key: `8`
@@ -164,4 +168,6 @@ A curated playlist format built for sharing. Fundamentally different from the pr
   - Artist bios/art fetched via `fetchArtistMeta()` on demand
 - **Journal storage:** Firebase Firestore — `memories/{songId}/entries`
 - **Cache:** localStorage, 30-min TTL, key `plex_library_v4`
+- **Last.fm:** `VITE_LASTFM_KEY` — artist bios and similar artists
+- **MusicBrainz:** No key required — new releases from library artists
 - **CI/CD:** GitHub Actions — all `VITE_*` vars injected as GitHub Secrets

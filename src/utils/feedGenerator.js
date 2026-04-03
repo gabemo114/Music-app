@@ -1,6 +1,26 @@
 import { TIL_FACTS_BY_ARTIST, FALLBACK_FACTS } from '../data/tilFacts'
 import { MOOD_DEFINITIONS } from '../data/moods'
 
+// Critic's Pick drops on Friday (5) and Monday (1)
+export function isCriticsPickDay(date = new Date()) {
+  const day = date.getDay()
+  return day === 1 || day === 5
+}
+
+// Cache key includes the ISO week + drop day so Friday and Monday each get their own pick
+function criticsPickCacheKey(date) {
+  const d = new Date(date)
+  // Find the most recent drop day (Mon or Fri)
+  const day = d.getDay()
+  const daysBack = day === 1 ? 0 : day === 5 ? 0 : day < 5 ? day - 1 : day - 5
+  d.setDate(d.getDate() - daysBack)
+  return `critics_pick_${d.toISOString().slice(0, 10)}`
+}
+
+export function getCriticsPickCacheKey(date = new Date()) {
+  return criticsPickCacheKey(date)
+}
+
 const JOURNAL_PROMPTS = [
   'Where were you the first time you heard this?',
   'What does this song remind you of?',
@@ -242,6 +262,29 @@ function buildAlbumOfTheDayCards(tracks, rng) {
   }))
 }
 
+function buildWelcomeCard(tracks, rng) {
+  // Pick a track with art as the invitation
+  const candidates = shuffle(tracks.filter(t => t.thumb && t.artist), rng)
+  const song = candidates[0] || null
+  return song ? [{ type: 'welcome', id: 'welcome-card', song }] : []
+}
+
+function buildNewReleaseCards(newReleases, rng) {
+  return shuffle(newReleases, rng).slice(0, 8).map(release => ({
+    type: 'new_release',
+    id: `newrelease-${release.artist}-${release.title}`,
+    release,
+  }))
+}
+
+function buildCriticsPickCards(criticspicks, rng) {
+  return shuffle(criticspicks, rng).slice(0, 2).map(pick => ({
+    type: 'critics_pick',
+    id: `criticspick-${pick.album}-${pick.artist}`,
+    pick,
+  }))
+}
+
 function buildJournalPromptCards(tracks, rng) {
   // Pick random tracks as journal prompt targets — prefer tracks with blur colors (more visual)
   const candidates = shuffle(tracks.filter(t => t.artist && t.thumb), rng)
@@ -292,7 +335,7 @@ function interleave(pools) {
   return result
 }
 
-export function generateFeed(tracks, date = new Date()) {
+export function generateFeed(tracks, date = new Date(), { newReleases = [], criticsPicks = [], hasJournalEntries = true } = {}) {
   if (!tracks || tracks.length === 0) return []
 
   const rng = seededRandom(dateSeed(date))
@@ -312,6 +355,8 @@ export function generateFeed(tracks, date = new Date()) {
   const artistCards = buildArtistCards(tracks, rng).slice(0, CAP)
   const albumCards = buildAlbumOfTheDayCards(tracks, rng).slice(0, CAP)
   const promptCards = buildJournalPromptCards(tracks, rng).slice(0, CAP)
+  const newReleaseCards = buildNewReleaseCards(newReleases, rng)
+  const criticsPickCards = buildCriticsPickCards(criticsPicks, rng)
 
   // Interleave evenly so card types rotate, not cluster
   const interleavedCards = interleave([
@@ -322,10 +367,15 @@ export function generateFeed(tracks, date = new Date()) {
     moodCards,
     chartCards,
     promptCards,
+    newReleaseCards,
+    criticsPickCards,
   ])
 
-  // On This Day always leads
-  const allCards = [...onThisDayCards, ...interleavedCards]
+  // Welcome card leads for new users with no journal entries
+  const welcomeCards = !hasJournalEntries ? buildWelcomeCard(tracks, rng) : []
+
+  // On This Day always leads (after welcome if present)
+  const allCards = [...welcomeCards, ...onThisDayCards, ...interleavedCards]
 
   // Second round for infinite scroll — different seed, same balance
   const allCards2 = interleave([
@@ -336,6 +386,7 @@ export function generateFeed(tracks, date = new Date()) {
     buildMoodCards(tracks, rng2).slice(0, CAP),
     buildChartTopperCards(tracks, rng2).slice(0, CAP),
     buildJournalPromptCards(tracks, rng2).slice(0, CAP),
+    buildNewReleaseCards(newReleases, rng2),
   ])
 
   return cardsToPages([...allCards, ...shuffle(allCards2, rng3)])

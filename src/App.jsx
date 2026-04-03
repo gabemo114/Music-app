@@ -3,9 +3,13 @@ import IntroAnimation from './components/IntroAnimation'
 import BottomNav from './components/BottomNav'
 import DiscoveryFeed from './pages/DiscoveryFeed'
 import LibraryPage from './pages/LibraryPage'
+import MemoirPage from './pages/MemoirPage'
+import MixTapePage from './pages/MixTapePage'
 import SongSheet from './components/SongSheet'
 import MiniPlayer from './components/MiniPlayer'
 import { streamUrl } from './lib/plex'
+
+const TAB_ORDER = ['discover', 'library', 'memoir', 'mixtape']
 
 export default function App() {
   const [showIntro, setShowIntro] = useState(true)
@@ -29,8 +33,9 @@ export default function App() {
     const delta = e.changedTouches[0].clientX - touchStartX.current
     touchStartX.current = null
     if (Math.abs(delta) < SWIPE_H_THRESHOLD) return
-    if (delta < 0 && activeTab === 'discover') setActiveTab('library')
-    if (delta > 0 && activeTab === 'library') setActiveTab('discover')
+    const idx = TAB_ORDER.indexOf(activeTab)
+    if (delta < 0 && idx < TAB_ORDER.length - 1) setActiveTab(TAB_ORDER[idx + 1])
+    if (delta > 0 && idx > 0) setActiveTab(TAB_ORDER[idx - 1])
   }
 
   // When a song is selected (from feed, library, or sheet), start playing it
@@ -73,7 +78,7 @@ export default function App() {
 
   return (
     <div
-      style={{ backgroundColor: '#09090b', color: '#fafafa', fontFamily: "'Lato', system-ui, sans-serif", height: '100dvh', overflow: 'hidden' }}
+      style={{ backgroundColor: '#09090b', color: '#fafafa', fontFamily: "'DM Sans', system-ui, sans-serif", height: '100dvh', overflow: 'hidden' }}
       onTouchStart={selectedSong ? undefined : handleTabSwipeStart}
       onTouchEnd={selectedSong ? undefined : handleTabSwipeEnd}
     >
@@ -84,11 +89,10 @@ export default function App() {
         onError={() => setIsPlaying(false)}
       />
 
-      {activeTab === 'discover' ? (
-        <DiscoveryFeed onSongSelect={handleSongSelect} />
-      ) : (
-        <LibraryPage onSongSelect={handleSongSelect} />
-      )}
+      {activeTab === 'discover' && <DiscoveryFeed onSongSelect={handleSongSelect} />}
+      {activeTab === 'library' && <LibraryPage onSongSelect={handleSongSelect} />}
+      {activeTab === 'memoir' && <MemoirPage />}
+      {activeTab === 'mixtape' && <MixTapePage />}
 
       <BottomNav activeTab={activeTab} onChange={setActiveTab} />
 

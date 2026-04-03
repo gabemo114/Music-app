@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { collection, limit, getDocs, query } from 'firebase/firestore'
+import { db } from '../lib/firebase'
 import { generateFeed } from '../utils/feedGenerator'
 import { usePlexLibrary } from '../hooks/usePlexLibrary'
 import AnniversaryCard from '../components/cards/AnniversaryCard'
@@ -8,6 +10,9 @@ import MoodCard from '../components/cards/MoodCard'
 import ArtistCard from '../components/cards/ArtistCard'
 import AlbumOfTheDayCard from '../components/cards/AlbumOfTheDayCard'
 import JournalPromptCard from '../components/cards/JournalPromptCard'
+import NewReleaseCard from '../components/cards/NewReleaseCard'
+import CriticsPickCard from '../components/cards/CriticsPickCard'
+import WelcomeCard from '../components/cards/WelcomeCard'
 import MoodPlaylist from '../components/MoodPlaylist'
 
 const SNAP_THRESHOLD = 60
@@ -29,6 +34,12 @@ function renderCard(card, onSongSelect, onMoodSelect, compact = false) {
       return <AlbumOfTheDayCard card={card} onSelect={onSongSelect} compact={compact} />
     case 'journal_prompt':
       return <JournalPromptCard card={card} onSelect={onSongSelect} compact={compact} />
+    case 'new_release':
+      return <NewReleaseCard card={card} compact={compact} />
+    case 'critics_pick':
+      return <CriticsPickCard card={card} compact={compact} />
+    case 'welcome':
+      return <WelcomeCard card={card} onSelect={onSongSelect} compact={compact} />
     default:
       return null
   }
@@ -41,16 +52,30 @@ export default function DiscoveryFeed({ onSongSelect }) {
   const [dragOffset, setDragOffset] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
   const [selectedMood, setSelectedMood] = useState(null)
+  const [hasJournalEntries, setHasJournalEntries] = useState(true)
   const touchStartY = useRef(null)
   const isDragging = useRef(false)
   const containerRef = useRef(null)
 
+  // Check if user has any journal entries
+  useEffect(() => {
+    async function checkEntries() {
+      try {
+        const snap = await getDocs(query(collection(db, 'memories'), limit(1)))
+        setHasJournalEntries(!snap.empty)
+      } catch {
+        setHasJournalEntries(true) // assume yes on error — don't show welcome card
+      }
+    }
+    checkEntries()
+  }, [])
+
   // Generate feed once tracks are loaded
   useEffect(() => {
     if (tracks.length > 0 && pages.length === 0) {
-      setPages(generateFeed(tracks))
+      setPages(generateFeed(tracks, new Date(), { hasJournalEntries }))
     }
-  }, [tracks, pages.length])
+  }, [tracks, pages.length, hasJournalEntries])
 
   // Generate more pages when nearing the end
   useEffect(() => {
